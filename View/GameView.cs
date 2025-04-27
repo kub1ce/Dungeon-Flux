@@ -95,26 +95,25 @@ namespace DungeonFlux.View
 
         private void DrawWalls(Room room, Vector2 position)
         {
-            // 1- верх, 2- право, 3- низ, 4- лево
-            if (!room.HasConnection(0))
+            if (!room.HasConnection(GameSettings.Directions.Up))
             {
                 _spriteBatch.Draw(_wallTexture,
                     new Rectangle((int)position.X, (int)position.Y, GameSettings.Graphics.RoomSize, GameSettings.Graphics.WallThickness),
                     Color.DarkGray);
             }
-            if (!room.HasConnection(1))
+            if (!room.HasConnection(GameSettings.Directions.Right))
             {
                 _spriteBatch.Draw(_wallTexture,
                     new Rectangle((int)position.X + GameSettings.Graphics.RoomSize - GameSettings.Graphics.WallThickness, (int)position.Y, GameSettings.Graphics.WallThickness, GameSettings.Graphics.RoomSize),
                     Color.DarkGray);
             }
-            if (!room.HasConnection(2))
+            if (!room.HasConnection(GameSettings.Directions.Down))
             {
                 _spriteBatch.Draw(_wallTexture,
                     new Rectangle((int)position.X, (int)position.Y + GameSettings.Graphics.RoomSize - GameSettings.Graphics.WallThickness, GameSettings.Graphics.RoomSize, GameSettings.Graphics.WallThickness),
                     Color.DarkGray);
             }
-            if (!room.HasConnection(3))
+            if (!room.HasConnection(GameSettings.Directions.Left))
             {
                 _spriteBatch.Draw(_wallTexture,
                     new Rectangle((int)position.X, (int)position.Y, GameSettings.Graphics.WallThickness, GameSettings.Graphics.RoomSize),

@@ -86,7 +86,7 @@ namespace DungeonFlux.Model
         private bool TryAddNextRoom()
         {
             int direction = _random.Next(4);
-            Point nextPos = _currentPosition + _directions[direction];
+            Point nextPos = _currentPosition + GameSettings.Directions.All[direction];
 
             if (nextPos.X < 0 || nextPos.X >= _width || nextPos.Y < 0 || nextPos.Y >= _height)
                 return false;

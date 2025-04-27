@@ -41,5 +41,21 @@ namespace DungeonFlux.Model
         {
             public static readonly int ConnectionCount = 4;
         }
+
+        public static class Directions
+        {
+            public static readonly Point[] All = new[]
+            {
+                new Point(0, -1),  // Up
+                new Point(1, 0),   // Right
+                new Point(0, 1),   // Down
+                new Point(-1, 0)   // Left
+            };
+
+            public const int Up = 0;
+            public const int Right = 1;
+            public const int Down = 2;
+            public const int Left = 3;
+        }
     }
 } 

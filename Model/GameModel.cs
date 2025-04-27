@@ -54,16 +54,8 @@ namespace DungeonFlux.Model
 
         public bool TryMovePlayer(int direction)
         {
-            Point[] directions = new[]
-            {
-                    new Point(0, -1),  // Up
-                    new Point(1, 0),   // Right
-                    new Point(0, 1),   // Down
-                    new Point(-1, 0)   // Left
-            }; // TODO: вынести дирекшнс в гейм сеттингс
-
             Point currentRoom = new Point((int)PlayerPosition.X, (int)PlayerPosition.Y);
-            Point newRoom = currentRoom + directions[direction];
+            Point newRoom = currentRoom + GameSettings.Directions.All[direction];
 
             if (newRoom.X < 0 || newRoom.X >= GameSettings.Dungeon.Width || 
                 newRoom.Y < 0 || newRoom.Y >= GameSettings.Dungeon.Height)

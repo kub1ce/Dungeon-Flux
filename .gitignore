@@ -44,3 +44,15 @@ Content/bin/
 # Системные папки
 .vs/
 *.vscode/
+
+# Архивы
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.bz2
+
+# Придумать название
+Content/Fonts/Overpass/static/
+Content/Fonts/Overpass/Overpass-Italic-VariableFont_wght.ttf

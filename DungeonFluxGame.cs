@@ -23,6 +23,10 @@ public class DungeonFluxGame : Game
     private Texture2D _playerTexture;
 
     private KeyboardState _previousKeyboardState;
+    private MouseState _previousMouseState;
+    private SpriteFont _menuFont;
+    private MenuState _menuState;
+    private bool _isInMenu = true;
 
     public DungeonFluxGame()
     {
@@ -42,15 +46,11 @@ public class DungeonFluxGame : Game
     {
         try
         {
-            _model = new GameModel();
-            _controller = new GameController(_model);
-            _playerModel = new Player(_model.PlayerPosition);
-            _playerController = new PlayerController(_playerModel);
             base.Initialize();
         }
         catch
         {
-            throw; // TODO: это надо было для отладки. Но я боюсь уберать - вдруг опять крашиться будет. Коммитну а потом когда-нибудь удалю.
+            throw;
         }
     }
 
@@ -59,11 +59,8 @@ public class DungeonFluxGame : Game
         try
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _view = new GameView(_model, _spriteBatch);
-
-            _playerTexture = Content.Load<Texture2D>("David"); // TODO: вынести в гейм сеттингс скин игрока
-
-            _playerView = new PlayerView(_playerModel, _playerTexture, _view);
+            _menuFont = Content.Load<SpriteFont>("MenuFont");
+            _menuState = new MenuState(_menuFont);
         }
         catch
         {
@@ -71,25 +68,60 @@ public class DungeonFluxGame : Game
         }
     }
 
+    private void InitializeGame()
+    {
+        _model = new GameModel();
+        _controller = new GameController(_model);
+        _playerModel = new Player(_model.PlayerPosition);
+        _playerController = new PlayerController(_playerModel);
+        _view = new GameView(_model, _spriteBatch);
+        _playerTexture = Content.Load<Texture2D>("David");
+        _playerView = new PlayerView(_playerModel, _playerTexture, _view);
+    }
+
     protected override void Update(GameTime gameTime)
     {
         try
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-                Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-
             var keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(GameSettings.Debug.DebugToggleKey) && 
-                !_previousKeyboardState.IsKeyDown(GameSettings.Debug.DebugToggleKey))
-            {
-                GameSettings.Debug.IsDebugModeEnabled = !GameSettings.Debug.IsDebugModeEnabled;
-            }
-            _previousKeyboardState = keyboardState;
+            var mouseState = Mouse.GetState();
 
-            _controller.Update();
-            _playerController.HandleInput(gameTime);
-            _view.UpdateCamera(_playerModel.Position);
+            if (_isInMenu)
+            {
+                _menuState.Update(mouseState, _previousMouseState);
+
+                if (_menuState.IsStartGameClicked())
+                {
+                    InitializeGame();
+                    _isInMenu = false;
+                }
+                else if (_menuState.IsExitClicked())
+                {
+                    Exit();
+                }
+            }
+            else
+            {
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
+                    keyboardState.IsKeyDown(Keys.Escape))
+                {
+                    _isInMenu = true;
+                    return;
+                }
+
+                if (keyboardState.IsKeyDown(GameSettings.Debug.DebugToggleKey) && 
+                    !_previousKeyboardState.IsKeyDown(GameSettings.Debug.DebugToggleKey))
+                {
+                    GameSettings.Debug.IsDebugModeEnabled = !GameSettings.Debug.IsDebugModeEnabled;
+                }
+
+                _controller.Update();
+                _playerController.HandleInput(gameTime);
+                _view.UpdateCamera(_playerModel.Position);
+            }
+
+            _previousKeyboardState = keyboardState;
+            _previousMouseState = mouseState;
             base.Update(gameTime);
         }
         catch
@@ -106,8 +138,15 @@ public class DungeonFluxGame : Game
 
             _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
             
-            _view.Draw(gameTime);
-            _playerView.Draw(_spriteBatch);
+            if (_isInMenu)
+            {
+                _menuState.Draw(_spriteBatch);
+            }
+            else
+            {
+                _view.Draw(gameTime);
+                _playerView.Draw(_spriteBatch);
+            }
             
             _spriteBatch.End();
 

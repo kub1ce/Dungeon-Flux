@@ -22,3 +22,10 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:David.png
+
+#begin MenuFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:MenuFont.spritefont

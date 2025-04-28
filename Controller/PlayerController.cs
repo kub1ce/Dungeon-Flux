@@ -36,8 +36,8 @@ namespace DungeonFlux.Controller
                 var newPosition = _model.Position + movement * _moveSpeed;
 
                 // Чтоб за рамки не выходил
-                // newPosition.X = MathHelper.Clamp(newPosition.X, 0, GameSettings.Dungeon.Width - 1);
-                // newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, GameSettings.Dungeon.Height - 1);
+                newPosition.X = MathHelper.Clamp(newPosition.X, 0, GameSettings.Dungeon.Width - 1);
+                newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, GameSettings.Dungeon.Height - 1);
 
                 _model.Position = newPosition;
             }

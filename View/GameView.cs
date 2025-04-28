@@ -12,6 +12,8 @@ namespace DungeonFlux.View
         private readonly Texture2D _roomTexture;
         private readonly Texture2D _wallTexture;
         private Vector2 _dungeonOffset;
+        private Vector2 _cameraPosition;
+        private float _scale = 1.5f; // TODO: Масштаб, вынести в GameSettings
 
         public GameView(GameModel model, SpriteBatch spriteBatch)
         {
@@ -49,6 +51,70 @@ namespace DungeonFlux.View
             Console.WriteLine($"Dungeon offset: {_dungeonOffset}");
         }
 
+        public void UpdateCamera(Vector2 playerPosition)
+        {
+            int screenWidth = _spriteBatch.GraphicsDevice.Viewport.Width;
+            int screenHeight = _spriteBatch.GraphicsDevice.Viewport.Height;
+            float scale = _scale;
+
+            float boxWidthPx = GameSettings.Player.Size * GameSettings.Camera.BoundingBoxWidthInPlayers * scale;
+            float boxHeightPx = GameSettings.Player.Size * GameSettings.Camera.BoundingBoxHeightInPlayers * scale;
+            boxWidthPx = Math.Min(boxWidthPx, screenWidth * GameSettings.Camera.MaxScreenWidthFraction);
+            boxHeightPx = Math.Min(boxHeightPx, screenHeight * GameSettings.Camera.MaxScreenHeightFraction);
+            float boxWidthWorld = boxWidthPx / scale;
+            float boxHeightWorld = boxHeightPx / scale;
+
+            Vector2 camera = _cameraPosition;
+            if (camera == Vector2.Zero)
+                camera = playerPosition;
+
+            float camCenterX = camera.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float camCenterY = camera.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float playerX = playerPosition.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float playerY = playerPosition.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+
+            float left = camCenterX - boxWidthWorld / 2;
+            float right = camCenterX + boxWidthWorld / 2 - GameSettings.Player.Size;
+            float top = camCenterY - boxHeightWorld / 2;
+            float bottom = camCenterY + boxHeightWorld / 2 - GameSettings.Player.Size;
+
+            if (playerX < left)
+                camera.X -= (left - playerX) / GameSettings.Graphics.RoomSize;
+            if (playerX > right)
+                camera.X += (playerX - right) / GameSettings.Graphics.RoomSize;
+            if (playerY < top)
+                camera.Y -= (top - playerY) / GameSettings.Graphics.RoomSize;
+            if (playerY > bottom)
+                camera.Y += (playerY - bottom) / GameSettings.Graphics.RoomSize;
+
+            float minX = 0;
+            float maxX = _model.Dungeon.GetLength(0) - 1;
+            float minY = 0;
+            float maxY = _model.Dungeon.GetLength(1) - 1;
+            camera.X = MathHelper.Clamp(camera.X, minX, maxX);
+            camera.Y = MathHelper.Clamp(camera.Y, minY, maxY);
+
+            _cameraPosition = camera;
+        }
+
+        private (float left, float top, float width, float height) GetBoundingBoxWorldRect()
+        {
+            float scale = _scale;
+            float boxWidthPx = GameSettings.Player.Size * GameSettings.Camera.BoundingBoxWidthInPlayers * scale;
+            float boxHeightPx = GameSettings.Player.Size * GameSettings.Camera.BoundingBoxHeightInPlayers * scale;
+            int screenWidth = _spriteBatch.GraphicsDevice.Viewport.Width;
+            int screenHeight = _spriteBatch.GraphicsDevice.Viewport.Height;
+            boxWidthPx = Math.Min(boxWidthPx, screenWidth * GameSettings.Camera.MaxScreenWidthFraction);
+            boxHeightPx = Math.Min(boxHeightPx, screenHeight * GameSettings.Camera.MaxScreenHeightFraction);
+            float boxWidthWorld = boxWidthPx / scale;
+            float boxHeightWorld = boxHeightPx / scale;
+            float camCenterX = _cameraPosition.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float camCenterY = _cameraPosition.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float left = camCenterX - boxWidthWorld / 2;
+            float top = camCenterY - boxHeightWorld / 2;
+            return (left, top, boxWidthWorld, boxHeightWorld);
+        }
+
         public void Draw(GameTime gameTime)
         {
             if (_model.Dungeon == null)
@@ -57,26 +123,95 @@ namespace DungeonFlux.View
                 return;
             }
 
-            Console.WriteLine($"Drawing dungeon with size: {_model.Dungeon.GetLength(0)}x{_model.Dungeon.GetLength(1)}");
+            int screenWidth = _spriteBatch.GraphicsDevice.Viewport.Width;
+            int screenHeight = _spriteBatch.GraphicsDevice.Viewport.Height;
+            float scale = _scale;
+            Vector2 screenCenter = new Vector2(screenWidth / 2, screenHeight / 2);
+            Vector2 cameraWorldOrigin = new Vector2(_cameraPosition.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2,
+                                                    _cameraPosition.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2);
 
-            for (int x = 0; x < _model.Dungeon.GetLength(0); x++)
+            int roomsOnScreenX = (int)Math.Ceiling(screenWidth / (GameSettings.Graphics.RoomSize * _scale));
+            int roomsOnScreenY = (int)Math.Ceiling(screenHeight / (GameSettings.Graphics.RoomSize * _scale));
+
+            int camX = (int)_cameraPosition.X;
+            int camY = (int)_cameraPosition.Y;
+
+            int minX = Math.Max(0, camX - roomsOnScreenX / 2 - 1);
+            int maxX = Math.Min(_model.Dungeon.GetLength(0), camX + roomsOnScreenX / 2 + 2);
+            int minY = Math.Max(0, camY - roomsOnScreenY / 2 - 1);
+            int maxY = Math.Min(_model.Dungeon.GetLength(1), camY + roomsOnScreenY / 2 + 2);
+
+            Vector2 cameraOffset = new Vector2(screenWidth / 2, screenHeight / 2) - new Vector2(_cameraPosition.X * GameSettings.Graphics.RoomSize * _scale + GameSettings.Graphics.RoomSize * _scale / 2, _cameraPosition.Y * GameSettings.Graphics.RoomSize * _scale + GameSettings.Graphics.RoomSize * _scale / 2);
+
+            for (int x = minX; x < maxX; x++)
             {
-                for (int y = 0; y < _model.Dungeon.GetLength(1); y++)
+                for (int y = minY; y < maxY; y++)
                 {
                     var room = _model.Dungeon[x, y];
                     if (room == null) continue;
 
-                    Vector2 position = new Vector2(x * GameSettings.Graphics.RoomSize, y * GameSettings.Graphics.RoomSize) + _dungeonOffset;
+                    Vector2 position = new Vector2(x * GameSettings.Graphics.RoomSize, y * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
 
                     Color roomColor = GetRoomColor(room.Type);
 
                     _spriteBatch.Draw(_roomTexture, 
-                        new Rectangle((int)position.X, (int)position.Y, GameSettings.Graphics.RoomSize, GameSettings.Graphics.RoomSize), 
+                        new Rectangle((int)position.X, (int)position.Y, (int)(GameSettings.Graphics.RoomSize * _scale), (int)(GameSettings.Graphics.RoomSize * _scale)), 
                         roomColor);
 
-                    DrawWalls(room, position);
+                    DrawWalls(room, position, _scale);
                 }
             }
+
+            // Debug информация
+            if (GameSettings.Debug.IsDebugModeEnabled)
+            {
+                DrawBoundingBox(screenWidth, screenHeight, scale, screenCenter);
+                DrawCenterLines(screenWidth, screenHeight);
+            }
+        }
+
+        private void DrawBoundingBox(int screenWidth, int screenHeight, float scale, Vector2 screenCenter)
+        {
+            var (boxLeftWorld, boxTopWorld, boxWidthWorld, boxHeightWorld) = GetBoundingBoxWorldRect();
+            Vector2 boxWorldPos = new Vector2(boxLeftWorld, boxTopWorld);
+            Vector2 boxScreenPos = (boxWorldPos - _cameraPosition * GameSettings.Graphics.RoomSize - new Vector2(GameSettings.Graphics.RoomSize / 2)) * scale + screenCenter;
+            float boxWidthPx = boxWidthWorld * scale;
+            float boxHeightPx = boxHeightWorld * scale;
+
+            DrawRectangleBorder(
+                new Rectangle((int)boxScreenPos.X, (int)boxScreenPos.Y, (int)boxWidthPx, (int)boxHeightPx),
+                GameSettings.Debug.BoundingBoxBorderThickness,
+                GameSettings.Debug.BoundingBoxColor
+            );
+        }
+
+        private void DrawCenterLines(int screenWidth, int screenHeight)
+        {
+            _spriteBatch.Draw(_roomTexture, 
+                new Rectangle(screenWidth / 2 - GameSettings.Debug.CenterLineThickness / 2, 0, 
+                    GameSettings.Debug.CenterLineThickness, screenHeight), 
+                GameSettings.Debug.CenterLineColor);
+
+            _spriteBatch.Draw(_roomTexture, 
+                new Rectangle(0, screenHeight / 2 - GameSettings.Debug.CenterLineThickness / 2, 
+                    screenWidth, GameSettings.Debug.CenterLineThickness), 
+                GameSettings.Debug.CenterLineColor);
+        }
+
+        private void DrawRectangleBorder(Rectangle rect, int borderThickness, Color color)
+        {
+            _spriteBatch.Draw(_roomTexture, 
+                new Rectangle(rect.X, rect.Y, rect.Width, borderThickness), 
+                color);
+            _spriteBatch.Draw(_roomTexture, 
+                new Rectangle(rect.X, rect.Y + rect.Height - borderThickness, rect.Width, borderThickness), 
+                color);
+            _spriteBatch.Draw(_roomTexture, 
+                new Rectangle(rect.X, rect.Y, borderThickness, rect.Height), 
+                color);
+            _spriteBatch.Draw(_roomTexture, 
+                new Rectangle(rect.X + rect.Width - borderThickness, rect.Y, borderThickness, rect.Height), 
+                color);
         }
 
         private Color GetRoomColor(RoomType type)
@@ -93,34 +228,37 @@ namespace DungeonFlux.View
             };
         }
 
-        private void DrawWalls(Room room, Vector2 position)
+        private void DrawWalls(Room room, Vector2 position, float scale)
         {
+            int size = (int)(GameSettings.Graphics.RoomSize * scale);
+            int wall = (int)(GameSettings.Graphics.WallThickness * scale);
             if (!room.HasConnection(GameSettings.Directions.Up))
             {
                 _spriteBatch.Draw(_wallTexture,
-                    new Rectangle((int)position.X, (int)position.Y, GameSettings.Graphics.RoomSize, GameSettings.Graphics.WallThickness),
+                    new Rectangle((int)position.X, (int)position.Y, size, wall),
                     Color.DarkGray);
             }
             if (!room.HasConnection(GameSettings.Directions.Right))
             {
                 _spriteBatch.Draw(_wallTexture,
-                    new Rectangle((int)position.X + GameSettings.Graphics.RoomSize - GameSettings.Graphics.WallThickness, (int)position.Y, GameSettings.Graphics.WallThickness, GameSettings.Graphics.RoomSize),
+                    new Rectangle((int)position.X + size - wall, (int)position.Y, wall, size),
                     Color.DarkGray);
             }
             if (!room.HasConnection(GameSettings.Directions.Down))
             {
                 _spriteBatch.Draw(_wallTexture,
-                    new Rectangle((int)position.X, (int)position.Y + GameSettings.Graphics.RoomSize - GameSettings.Graphics.WallThickness, GameSettings.Graphics.RoomSize, GameSettings.Graphics.WallThickness),
+                    new Rectangle((int)position.X, (int)position.Y + size - wall, size, wall),
                     Color.DarkGray);
             }
             if (!room.HasConnection(GameSettings.Directions.Left))
             {
                 _spriteBatch.Draw(_wallTexture,
-                    new Rectangle((int)position.X, (int)position.Y, GameSettings.Graphics.WallThickness, GameSettings.Graphics.RoomSize),
+                    new Rectangle((int)position.X, (int)position.Y, wall, size),
                     Color.DarkGray);
             }
         }
 
-        public Vector2 GetDungeonOffset() => _dungeonOffset;
+        public Vector2 CameraPosition => _cameraPosition;
+        public float Scale => _scale;
     }
 }

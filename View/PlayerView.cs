@@ -22,18 +22,22 @@ namespace DungeonFlux.View
         {
             try
             {
-                Vector2 dungeonOffset = _gameView.GetDungeonOffset();
+                Vector2 cameraPosition = _gameView.CameraPosition;
+                float scale = _gameView.Scale;
+                int screenWidth = spriteBatch.GraphicsDevice.Viewport.Width;
+                int screenHeight = spriteBatch.GraphicsDevice.Viewport.Height;
 
-                Vector2 position = new Vector2(
-                    _model.Position.X * GameSettings.Graphics.RoomSize + dungeonOffset.X + GameSettings.Graphics.RoomSize / 2 - GameSettings.Player.Size / 2,
-                    _model.Position.Y * GameSettings.Graphics.RoomSize + dungeonOffset.Y + GameSettings.Graphics.RoomSize / 2 - GameSettings.Player.Size / 2
-                );
+                Vector2 screenCenter = new Vector2(screenWidth / 2, screenHeight / 2);
 
-                position.X = MathHelper.Clamp(position.X, 0, spriteBatch.GraphicsDevice.Viewport.Width - GameSettings.Player.Size);
-                position.Y = MathHelper.Clamp(position.Y, 0, spriteBatch.GraphicsDevice.Viewport.Height - GameSettings.Player.Size);
+                Vector2 playerWorld = new Vector2(_model.Position.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2,
+                                                  _model.Position.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2);
+
+                Vector2 position = (playerWorld - cameraPosition * GameSettings.Graphics.RoomSize - new Vector2(GameSettings.Graphics.RoomSize / 2)) * scale + screenCenter;
+
+                int playerSize = (int)(GameSettings.Player.Size * scale);
 
                 spriteBatch.Draw(_texture, 
-                    new Rectangle((int)position.X, (int)position.Y, GameSettings.Player.Size, GameSettings.Player.Size), 
+                    new Rectangle((int)position.X, (int)position.Y, playerSize, playerSize), 
                     Color.White);
             }
             catch (Exception ex)

@@ -22,6 +22,8 @@ public class DungeonFluxGame : Game
     private PlayerView _playerView;
     private Texture2D _playerTexture;
 
+    private KeyboardState _previousKeyboardState;
+
     public DungeonFluxGame()
     {
         Console.WriteLine("Initializing DungeonFluxGame");
@@ -77,8 +79,17 @@ public class DungeonFluxGame : Game
                 Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            var keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(GameSettings.Debug.DebugToggleKey) && 
+                !_previousKeyboardState.IsKeyDown(GameSettings.Debug.DebugToggleKey))
+            {
+                GameSettings.Debug.IsDebugModeEnabled = !GameSettings.Debug.IsDebugModeEnabled;
+            }
+            _previousKeyboardState = keyboardState;
+
             _controller.Update();
             _playerController.HandleInput(gameTime);
+            _view.UpdateCamera(_playerModel.Position);
             base.Update(gameTime);
         }
         catch

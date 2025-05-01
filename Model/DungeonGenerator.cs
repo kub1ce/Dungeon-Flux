@@ -7,24 +7,12 @@ namespace DungeonFlux.Model
     public class DungeonGenerator
     {
         private readonly Random _random;
-
         private readonly int _width;
         private readonly int _height;
-
         private readonly int _minRooms;
         private readonly int _maxRooms;
         private Room[,] _dungeon;
-        private Point _currentPosition;
         private int _roomCount;
-
-        // Направления: Up, Right, Down, Left
-        private readonly Point[] _directions = new[]
-        {
-            new Point(0, -1),  // Up
-            new Point(1, 0),   // Right
-            new Point(0, 1),   // Down
-            new Point(-1, 0)   // Left
-        }; // TODO: вынести дирекшнс в гейм сеттингс
 
         public DungeonGenerator(int width, int height, int minRooms, int maxRooms)
         {
@@ -40,6 +28,8 @@ namespace DungeonFlux.Model
         public Room[,] Generate()
         {
             Console.WriteLine($"Generating dungeon with size {_width}x{_height}, rooms: {_minRooms}-{_maxRooms}");
+            
+            // Очищаем карту
             for (int x = 0; x < _width; x++)
             {
                 for (int y = 0; y < _height; y++)
@@ -48,17 +38,19 @@ namespace DungeonFlux.Model
                 }
             }
 
-            _currentPosition = new Point(_random.Next(_width), _random.Next(_height));
-            _dungeon[_currentPosition.X, _currentPosition.Y] = new Room(_currentPosition, RoomType.Start);
+            // Создаем начальную комнату
+            Point startPos = new Point(_random.Next(_width), _random.Next(_height));
+            _dungeon[startPos.X, startPos.Y] = new Room(startPos, new Point(1, 1), RoomType.Start);
             _roomCount++;
-            Console.WriteLine($"Start room placed at: {_currentPosition.X}, {_currentPosition.Y}");
+            Console.WriteLine($"Start room placed at: {startPos.X}, {startPos.Y}");
 
-            // Генерация комнат методом случайного блуждения
+            // Генерация комнат методом случайного блуждания
+            Point currentPos = startPos;
             while (_roomCount < _maxRooms)
             {
-                if (!TryAddNextRoom())
+                if (!TryAddNextRoom(currentPos))
                 {
-                    _currentPosition = GetRandomExistingRoomPosition();
+                    currentPos = GetRandomExistingRoomPosition();
                 }
             }
 
@@ -70,23 +62,27 @@ namespace DungeonFlux.Model
                     Point pos = new Point(_random.Next(_width), _random.Next(_height));
                     if (_dungeon[pos.X, pos.Y] == null)
                     {
-                        _dungeon[pos.X, pos.Y] = new Room(pos, GetRandomRoomType());
+                        _dungeon[pos.X, pos.Y] = new Room(pos, new Point(1, 1), GetRandomRoomType());
                         _roomCount++;
                     }
                 }
             }
 
-            // Выход
-            AddExit();
-            Console.WriteLine($"Dungeon generation complete. Total rooms: {_roomCount}");
+            // Назначаем конечную комнату
+            Point exitPos = FindFurthestRoom(startPos);
+            _dungeon[exitPos.X, exitPos.Y].Type = RoomType.Exit;
+            Console.WriteLine($"Exit room placed at: {exitPos.X}, {exitPos.Y}");
 
+            // Помечаем тупиковые комнаты
+            MarkDeadEnds();
+            Console.WriteLine($"Dungeon generation complete. Total rooms: {_roomCount}");
             return _dungeon;
         }
 
-        private bool TryAddNextRoom()
+        private bool TryAddNextRoom(Point currentPos)
         {
             int direction = _random.Next(4);
-            Point nextPos = _currentPosition + GameSettings.Directions.All[direction];
+            Point nextPos = currentPos + GameSettings.Directions.All[direction];
 
             if (nextPos.X < 0 || nextPos.X >= _width || nextPos.Y < 0 || nextPos.Y >= _height)
                 return false;
@@ -94,13 +90,13 @@ namespace DungeonFlux.Model
             if (_dungeon[nextPos.X, nextPos.Y] != null)
                 return false;
 
-            _dungeon[nextPos.X, nextPos.Y] = new Room(nextPos, GetRandomRoomType());
+            _dungeon[nextPos.X, nextPos.Y] = new Room(nextPos, new Point(1, 1), GetRandomRoomType());
             _roomCount++;
 
-            _dungeon[_currentPosition.X, _currentPosition.Y].SetConnection(direction, true);
+            // Устанавливаем соединения между комнатами
+            _dungeon[currentPos.X, currentPos.Y].SetConnection(direction, true);
             _dungeon[nextPos.X, nextPos.Y].SetConnection((direction + 2) % 4, true);
 
-            _currentPosition = nextPos;
             return true;
         }
 
@@ -120,39 +116,8 @@ namespace DungeonFlux.Model
             return existingRooms[_random.Next(existingRooms.Count)];
         }
 
-        private RoomType GetRandomRoomType()
+        private Point FindFurthestRoom(Point startPos)
         {
-            // Распределение вероятностей для разных тип комнат
-            double roll = _random.NextDouble();
-            if (roll < 0.4) return RoomType.Empty;
-            if (roll < 0.6) return RoomType.Enemy;
-            if (roll < 0.75) return RoomType.Treasure;
-            if (roll < 0.85) return RoomType.Shop;
-            return RoomType.Boss;
-        }
-
-        private void AddExit()
-        {
-            Point exitPos = FindFurthestRoom();
-            _dungeon[exitPos.X, exitPos.Y].Type = RoomType.Exit;
-            Console.WriteLine($"Exit room placed at: {exitPos.X}, {exitPos.Y}");
-        }
-
-        private Point FindFurthestRoom()
-        {
-            Point startPos = new Point(0, 0);
-            for (int x = 0; x < _width; x++)
-            {
-                for (int y = 0; y < _height; y++)
-                {
-                    if (_dungeon[x, y]?.Type == RoomType.Start)
-                    {
-                        startPos = new Point(x, y);
-                        break;
-                    }
-                }
-            }
-
             Point furthestRoom = startPos;
             float maxDistance = 0;
 
@@ -160,7 +125,7 @@ namespace DungeonFlux.Model
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    if (_dungeon[x, y] != null)
+                    if (_dungeon[x, y] != null && (x != startPos.X || y != startPos.Y))
                     {
                         float distance = Vector2.Distance(
                             new Vector2(startPos.X, startPos.Y),
@@ -176,6 +141,38 @@ namespace DungeonFlux.Model
             }
 
             return furthestRoom;
+        }
+
+        private RoomType GetRandomRoomType()
+        {
+            double roll = _random.NextDouble();
+            if (roll < 0.4) return RoomType.Empty;
+            if (roll < 0.6) return RoomType.Enemy;
+            if (roll < 0.75) return RoomType.Treasure;
+            if (roll < 0.85) return RoomType.Shop;
+            return RoomType.Boss;
+        }
+
+        private void MarkDeadEnds()
+        {
+            for (int x = 0; x < _width; x++)
+            {
+                for (int y = 0; y < _height; y++)
+                {
+                    var room = _dungeon[x, y];
+                    if (room != null && room.Type != RoomType.Start && room.Type != RoomType.Exit)
+                    {
+                        if (room.IsDeadEnd())
+                        {
+                            room.Type = RoomType.DeadEnd;
+                        }
+                        else
+                        {
+                            room.Type = RoomType.Corridor;
+                        }
+                    }
+                }
+            }
         }
     }
 } 

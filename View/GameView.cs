@@ -152,11 +152,17 @@ namespace DungeonFlux.View
 
                     Vector2 position = new Vector2(x * GameSettings.Graphics.RoomSize, y * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
 
-                    Color roomColor = GetRoomColor(room.Type);
-
-                    _spriteBatch.Draw(_roomTexture, 
-                        new Rectangle((int)position.X, (int)position.Y, (int)(GameSettings.Graphics.RoomSize * _scale), (int)(GameSettings.Graphics.RoomSize * _scale)), 
-                        roomColor);
+                    if (room.Type == RoomType.Corridor)
+                    {
+                        DrawCorridor(room, position, _scale);
+                    }
+                    else
+                    {
+                        Color roomColor = GetRoomColor(room.Type);
+                        _spriteBatch.Draw(_roomTexture, 
+                            new Rectangle((int)position.X, (int)position.Y, (int)(GameSettings.Graphics.RoomSize * _scale), (int)(GameSettings.Graphics.RoomSize * _scale)), 
+                            roomColor);
+                    }
 
                     DrawWalls(room, position, _scale);
                 }
@@ -218,13 +224,12 @@ namespace DungeonFlux.View
         {
             return type switch
             {
-                RoomType.Start => Color.Green,
-                RoomType.Exit => Color.Red,
-                // RoomType.Treasure => Color.Yellow,
-                // RoomType.Enemy => Color.Orange,
-                // RoomType.Boss => Color.Purple,
-                // RoomType.Shop => Color.Blue,
-                _ => Color.Gray // TODO: вынести в гейм сеттингс или вообще эта дебаг инфа не понадобится - незн. 
+                RoomType.Start => GameSettings.Graphics.StartRoomColor,
+                RoomType.Exit => GameSettings.Graphics.ExitRoomColor,
+                RoomType.Boss => GameSettings.Graphics.BossRoomColor,
+                RoomType.Corridor => GameSettings.Graphics.CorridorColor,
+                RoomType.DeadEnd => GameSettings.Graphics.DeadEndColor,
+                _ => GameSettings.Graphics.DefaultRoomColor
             };
         }
 
@@ -232,28 +237,202 @@ namespace DungeonFlux.View
         {
             int size = (int)(GameSettings.Graphics.RoomSize * scale);
             int wall = (int)(GameSettings.Graphics.WallThickness * scale);
-            if (!room.HasConnection(GameSettings.Directions.Up))
+            int corridorWidth = (int)(GameSettings.Graphics.RoomSize * scale * 0.3f);
+            int centerOffset = (size - corridorWidth) / 2;
+            
+            if (room.Type == RoomType.Corridor)
             {
-                _spriteBatch.Draw(_wallTexture,
-                    new Rectangle((int)position.X, (int)position.Y, size, wall),
+                if (!room.HasConnection(GameSettings.Directions.Up))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset, (int)position.Y + centerOffset, corridorWidth, wall),
+                        GameSettings.Graphics.CorridorWallColor);
+                }
+
+                if (!room.HasConnection(GameSettings.Directions.Right))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset + corridorWidth - wall, (int)position.Y + centerOffset, wall, corridorWidth),
+                        GameSettings.Graphics.CorridorWallColor);
+                }
+
+                if (!room.HasConnection(GameSettings.Directions.Down))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset, (int)position.Y + centerOffset + corridorWidth - wall, corridorWidth, wall),
+                        GameSettings.Graphics.CorridorWallColor);
+                }
+
+                if (!room.HasConnection(GameSettings.Directions.Left))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset, (int)position.Y + centerOffset, wall, corridorWidth),
+                        GameSettings.Graphics.CorridorWallColor);
+                }
+
+                if (room.HasConnection(GameSettings.Directions.Up))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset, (int)position.Y, wall, centerOffset),
+                        GameSettings.Graphics.CorridorWallColor);
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset + corridorWidth - wall, (int)position.Y, wall, centerOffset),
+                        GameSettings.Graphics.CorridorWallColor);
+                }
+
+                if (room.HasConnection(GameSettings.Directions.Right))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset + corridorWidth, (int)position.Y + centerOffset, size - (centerOffset + corridorWidth), wall),
+                        GameSettings.Graphics.CorridorWallColor);
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset + corridorWidth, (int)position.Y + centerOffset + corridorWidth - wall, size - (centerOffset + corridorWidth), wall),
+                        GameSettings.Graphics.CorridorWallColor);
+                }
+
+                if (room.HasConnection(GameSettings.Directions.Down))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset, (int)position.Y + centerOffset + corridorWidth, wall, size - (centerOffset + corridorWidth)),
+                        GameSettings.Graphics.CorridorWallColor);
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset + corridorWidth - wall, (int)position.Y + centerOffset + corridorWidth, wall, size - (centerOffset + corridorWidth)),
+                        GameSettings.Graphics.CorridorWallColor);
+                }
+
+                if (room.HasConnection(GameSettings.Directions.Left))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y + centerOffset, centerOffset, wall),
+                        GameSettings.Graphics.CorridorWallColor);
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y + centerOffset + corridorWidth - wall, centerOffset, wall),
+                        GameSettings.Graphics.CorridorWallColor);
+                }
+            }
+            else
+            {
+                if (!room.HasConnection(GameSettings.Directions.Up))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y, size, wall),
+                        GameSettings.Graphics.RoomWallColor);
+                }
+                else
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y, centerOffset, wall),
+                        GameSettings.Graphics.RoomWallColor);
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset + corridorWidth, (int)position.Y, size - (centerOffset + corridorWidth), wall),
+                        GameSettings.Graphics.RoomWallColor);
+                }
+
+                if (!room.HasConnection(GameSettings.Directions.Right))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + size - wall, (int)position.Y, wall, size),
+                        GameSettings.Graphics.RoomWallColor);
+                }
+                else
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + size - wall, (int)position.Y, wall, centerOffset),
+                        GameSettings.Graphics.RoomWallColor);
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + size - wall, (int)position.Y + centerOffset + corridorWidth, wall, size - (centerOffset + corridorWidth)),
+                        GameSettings.Graphics.RoomWallColor);
+                }
+
+                if (!room.HasConnection(GameSettings.Directions.Down))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y + size - wall, size, wall),
+                        GameSettings.Graphics.RoomWallColor);
+                }
+                else
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y + size - wall, centerOffset, wall),
+                        GameSettings.Graphics.RoomWallColor);
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X + centerOffset + corridorWidth, (int)position.Y + size - wall, size - (centerOffset + corridorWidth), wall),
+                        GameSettings.Graphics.RoomWallColor);
+                }
+
+                if (!room.HasConnection(GameSettings.Directions.Left))
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y, wall, size),
+                        GameSettings.Graphics.RoomWallColor);
+                }
+                else
+                {
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y, wall, centerOffset),
+                        GameSettings.Graphics.RoomWallColor);
+                    _spriteBatch.Draw(_wallTexture,
+                        new Rectangle((int)position.X, (int)position.Y + centerOffset + corridorWidth, wall, size - (centerOffset + corridorWidth)),
+                        GameSettings.Graphics.RoomWallColor);
+                }
+            }
+        }
+
+        private void DrawCorridor(Room room, Vector2 position, float scale)
+        {
+            int size = (int)(GameSettings.Graphics.RoomSize * scale);
+            int corridorWidth = (int)(GameSettings.Graphics.RoomSize * scale * 0.3f); // Ширина коридора 30% от размера комнаты
+            int centerOffset = (size - corridorWidth) / 2;
+
+            _spriteBatch.Draw(_roomTexture,
+                new Rectangle(
+                    (int)position.X + centerOffset,
+                    (int)position.Y + centerOffset,
+                    corridorWidth,
+                    corridorWidth),
+                Color.DarkGray);
+
+            if (room.HasConnection(GameSettings.Directions.Up))
+            {
+                _spriteBatch.Draw(_roomTexture,
+                    new Rectangle(
+                        (int)position.X + centerOffset,
+                        (int)position.Y,
+                        corridorWidth,
+                        centerOffset + corridorWidth / 2),
                     Color.DarkGray);
             }
-            if (!room.HasConnection(GameSettings.Directions.Right))
+
+            if (room.HasConnection(GameSettings.Directions.Right))
             {
-                _spriteBatch.Draw(_wallTexture,
-                    new Rectangle((int)position.X + size - wall, (int)position.Y, wall, size),
+                _spriteBatch.Draw(_roomTexture,
+                    new Rectangle(
+                        (int)position.X + centerOffset + corridorWidth / 2,
+                        (int)position.Y + centerOffset,
+                        size - (centerOffset + corridorWidth / 2),
+                        corridorWidth),
                     Color.DarkGray);
             }
-            if (!room.HasConnection(GameSettings.Directions.Down))
+
+            if (room.HasConnection(GameSettings.Directions.Down))
             {
-                _spriteBatch.Draw(_wallTexture,
-                    new Rectangle((int)position.X, (int)position.Y + size - wall, size, wall),
+                _spriteBatch.Draw(_roomTexture,
+                    new Rectangle(
+                        (int)position.X + centerOffset,
+                        (int)position.Y + centerOffset + corridorWidth / 2,
+                        corridorWidth,
+                        size - (centerOffset + corridorWidth / 2)),
                     Color.DarkGray);
             }
-            if (!room.HasConnection(GameSettings.Directions.Left))
+
+            if (room.HasConnection(GameSettings.Directions.Left))
             {
-                _spriteBatch.Draw(_wallTexture,
-                    new Rectangle((int)position.X, (int)position.Y, wall, size),
+                _spriteBatch.Draw(_roomTexture,
+                    new Rectangle(
+                        (int)position.X,
+                        (int)position.Y + centerOffset,
+                        centerOffset + corridorWidth / 2,
+                        corridorWidth),
                     Color.DarkGray);
             }
         }

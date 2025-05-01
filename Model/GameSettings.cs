@@ -24,6 +24,18 @@ namespace DungeonFlux.Model
             public static readonly int RoomSize = 768;
             public static readonly int WallThickness = 32;
             public static readonly int Padding = 0;
+
+            // Room colors
+            public static readonly Color StartRoomColor = Color.Green;
+            public static readonly Color ExitRoomColor = Color.Red;
+            public static readonly Color BossRoomColor = Color.Purple;
+            public static readonly Color CorridorColor = Color.White;
+            public static readonly Color DeadEndColor = Color.Orange;
+            public static readonly Color DefaultRoomColor = Color.White;
+
+            // Wall colors
+            public static readonly Color CorridorWallColor = Color.Gray;
+            public static readonly Color RoomWallColor = Color.DarkGray;
         }
 
         // Dungeon settings
@@ -34,6 +46,9 @@ namespace DungeonFlux.Model
 
             public static readonly int MinRooms = 12;
             public static readonly int MaxRooms = 64;
+            
+            public static readonly int MinRoomSize = 4;
+            public static readonly int MaxRoomSize = 12;
         }
 
         // Room settings
@@ -72,7 +87,7 @@ namespace DungeonFlux.Model
         // Debug settings
         public static class Debug
         {
-            public static bool IsDebugModeEnabled = true; // !!! ВКЛ по умолчанию. не забыть выключить при релизе
+            public static bool IsDebugModeEnabled = false; // !!! ВКЛ по умолчанию. не забыть выключить при релизе
             public const Microsoft.Xna.Framework.Input.Keys DebugToggleKey = Microsoft.Xna.Framework.Input.Keys.P;
             
             public const int CenterLineThickness = 2;

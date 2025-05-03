@@ -10,7 +10,7 @@ namespace DungeonFlux.Model
             public static readonly Vector2 DefaultStartPosition = new Vector2(400, 300);
             public static readonly Point GameStartPosition = new Point(400, 300);
 
-            public static readonly float MoveSpeed = .024f * 1.5f;
+            public static readonly float MoveSpeed = .24f * 4;
             public static readonly int MaxHealth = 100;
 
             public static readonly int Size = 112;
@@ -21,34 +21,65 @@ namespace DungeonFlux.Model
         {
             public static readonly Color BackgroundColor = new Color(20, 20, 30);
 
-            public static readonly int RoomSize = 768;
+            public static readonly int RoomSize = 1536;
             public static readonly int WallThickness = 32;
             public static readonly int Padding = 0;
+            public static readonly float Scale = .5f;
 
-            // Room colors
-            public static readonly Color StartRoomColor = Color.Green;
-            public static readonly Color ExitRoomColor = Color.Red;
-            public static readonly Color BossRoomColor = Color.Purple;
-            public static readonly Color CorridorColor = Color.White;
-            public static readonly Color DeadEndColor = Color.Orange;
-            public static readonly Color DefaultRoomColor = Color.White;
+            public static class Corridor
+            {
+                public const float WidthRatio = 0.3f; // Ширина коридора 30% от размера комнаты
+                public const float CenterOffsetRatio = 0.5f; // Смещение центра коридора
+            }
 
-            // Wall colors
-            public static readonly Color CorridorWallColor = Color.Gray;
-            public static readonly Color RoomWallColor = Color.DarkGray;
+            public static class RoomColors
+            {
+                public static readonly Color StartRoom = Color.Green;
+                public static readonly Color ExitRoom = Color.Red;
+                public static readonly Color BossRoom = Color.Purple;
+                public static readonly Color Corridor = Color.Gray;
+                public static readonly Color DeadEnd = Color.Orange;
+                public static readonly Color Default = Color.White;
+            }
+
+            public static class WallColors
+            {
+                public static readonly Color Corridor = Color.DarkGray;
+                public static readonly Color Room = Color.DarkGray;
+            }
         }
 
         // Dungeon settings
         public static class Dungeon
         {
-            public static readonly int Width = 64;
-            public static readonly int Height = 64;
+            public static class Size
+            {
+                public static readonly int Width = 64;
+                public static readonly int Height = 64;
+            }
 
-            public static readonly int MinRooms = 12;
-            public static readonly int MaxRooms = 64;
-            
-            public static readonly int MinRoomSize = 4;
-            public static readonly int MaxRoomSize = 12;
+            public static class RoomCount
+            {
+                public static readonly int Min = 12;
+                public static readonly int Max = 64;
+            }
+
+            public static class RoomSize
+            {
+                public static readonly Point Default = new Point(1, 1);
+            }
+
+            /// <summary>
+            /// Вероятности появления разных типов комнат
+            /// </summary>
+            public static class RoomProbabilities
+            {
+                public const double Empty = 0.4;    // 40%
+                public const double Enemy = 0.2;    // 20%
+                public const double Treasure = 0.15; // 15%
+                public const double Shop = 0.1;     // 10%
+                public const double Boss = 0.15;    // 15%
+            }
         }
 
         // Room settings
@@ -73,28 +104,46 @@ namespace DungeonFlux.Model
             public const int Left = 3;
         }
 
-        // Camera bounding box settings
+        // Camera settings
         public static class Camera
         {
-            public const float BoundingBoxWidthInPlayers = 3f;
-            public const float BoundingBoxHeightInPlayers = 2f; // Мб сразу тут считать в размене игрока и возвращать уже значения??
+            public static class BoundingBox
+            {
+                public const float WidthInPlayers = 3f;
+                public const float HeightInPlayers = 2f; // Мб сразу тут считать в размене игрока и возвращать уже значения??
+            }
 
-            // Максимальная площадь бокса относительно площади экрана
-            public const float MaxScreenWidthFraction = 0.5f;
-            public const float MaxScreenHeightFraction = 1f / 3f; // Аналогично???
+            public static class ScreenLimits
+            {
+                // Максимальная площадь бокса относительно площади экрана
+                public const float MaxWidthFraction = 0.5f;
+                public const float MaxHeightFraction = 1f / 3f; // Аналогично???
+            }
         }
 
         // Debug settings
         public static class Debug
         {
             public static bool IsDebugModeEnabled = false; // !!! ВКЛ по умолчанию. не забыть выключить при релизе
-            public const Microsoft.Xna.Framework.Input.Keys DebugToggleKey = Microsoft.Xna.Framework.Input.Keys.P;
-            
-            public const int CenterLineThickness = 2;
-            public static readonly Color CenterLineColor = Color.Cyan;
+            public const Microsoft.Xna.Framework.Input.Keys DebugToggleKey = Microsoft.Xna.Framework.Input.Keys.F3;
 
-            public const int BoundingBoxBorderThickness = 4;
-            public static readonly Color BoundingBoxColor = Color.Gold;
+            public static class BoundingBox
+            {
+                public const int BorderThickness = 2;
+                public static readonly Color Color = Color.Yellow;
+            }
+
+            public static class CenterLine
+            {
+                public const int Thickness = 2;
+                public static readonly Color Color = Color.Cyan;
+            }
+
+            public static class CorridorBorder
+            {
+                public const int Thickness = 2;
+                public static readonly Color Color = Color.Red;
+            }
         }
     }
 } 

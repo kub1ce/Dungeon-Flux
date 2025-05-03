@@ -30,7 +30,7 @@ public class DungeonFluxGame : Game
 
     public DungeonFluxGame()
     {
-        Console.WriteLine("Initializing DungeonFluxGame");
+        Logger.Log("Initializing DungeonFluxGame");
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
@@ -38,7 +38,7 @@ public class DungeonFluxGame : Game
         _graphics.IsFullScreen = true;
         _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
         _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
-        Console.WriteLine($"Setting screen size to: {_graphics.PreferredBackBufferWidth}x{_graphics.PreferredBackBufferHeight}");
+        Logger.Log($"Setting screen size to: {_graphics.PreferredBackBufferWidth}x{_graphics.PreferredBackBufferHeight}");
         _graphics.ApplyChanges();
     }
 
@@ -58,25 +58,38 @@ public class DungeonFluxGame : Game
     {
         try
         {
+            Logger.Log("Loading content...");
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+            Logger.Log("Loading MenuFont...");
             _menuFont = Content.Load<SpriteFont>("MenuFont");
+            Logger.Log("MenuFont loaded successfully");
             _menuState = new MenuState(_menuFont);
+            Logger.Log("MenuState initialized");
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.LogError("Error in LoadContent", ex);
             throw;
         }
     }
 
     private void InitializeGame()
     {
+        if (_menuFont == null)
+        {
+            Logger.LogError("Font is not loaded yet!");
+            return;
+        }
+
+        Logger.Log("Initializing game...");
         _model = new GameModel();
         _controller = new GameController(_model);
         _playerModel = new Player(_model.PlayerPosition);
-        _playerController = new PlayerController(_playerModel);
-        _view = new GameView(_model, _spriteBatch);
+        _playerController = new PlayerController(_playerModel, _model);
+        _view = new GameView(_model, _spriteBatch, _menuFont, _playerModel);
         _playerTexture = Content.Load<Texture2D>("David");
         _playerView = new PlayerView(_playerModel, _playerTexture, _view);
+        Logger.Log("Game initialized successfully");
     }
 
     protected override void Update(GameTime gameTime)
@@ -88,7 +101,7 @@ public class DungeonFluxGame : Game
 
             if (_isInMenu)
             {
-                _menuState.Update(mouseState, _previousMouseState);
+                _menuState.Update(mouseState, _previousMouseState, gameTime);
 
                 if (_menuState.IsStartGameClicked())
                 {
@@ -116,7 +129,7 @@ public class DungeonFluxGame : Game
                 }
 
                 _controller.Update();
-                _playerController.HandleInput(gameTime);
+                _playerController.Update(gameTime);
                 _view.UpdateCamera(_playerModel.Position);
             }
 

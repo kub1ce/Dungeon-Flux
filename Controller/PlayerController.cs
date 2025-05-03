@@ -7,39 +7,43 @@ namespace DungeonFlux.Controller
 {
     public class PlayerController
     {
-        private readonly Player _model;
-        private readonly float _moveSpeed;
+        private readonly Player _player;
+        private readonly GameModel _gameModel;
 
-        public PlayerController(Player model)
+        public PlayerController(Player player, GameModel gameModel)
         {
-            _model = model;
-            _moveSpeed = GameSettings.Player.MoveSpeed;
+            _player = player;
+            _gameModel = gameModel;
         }
 
-        public void HandleInput(GameTime gameTime)
+        public void Update(GameTime gameTime)
         {
             var keyboardState = Keyboard.GetState();
-            var movement = Vector2.Zero;
+            var direction = Vector2.Zero;
 
-            if (keyboardState.IsKeyDown(Keys.W))
-                movement.Y -= 1;
-            if (keyboardState.IsKeyDown(Keys.S))
-                movement.Y += 1;
-            if (keyboardState.IsKeyDown(Keys.A))
-                movement.X -= 1;
-            if (keyboardState.IsKeyDown(Keys.D))
-                movement.X += 1;
+            if (keyboardState.IsKeyDown(Keys.W) || keyboardState.IsKeyDown(Keys.Up))
+                direction.Y -= 1;
+            if (keyboardState.IsKeyDown(Keys.S) || keyboardState.IsKeyDown(Keys.Down))
+                direction.Y += 1;
+            if (keyboardState.IsKeyDown(Keys.A) || keyboardState.IsKeyDown(Keys.Left))
+                direction.X -= 1;
+            if (keyboardState.IsKeyDown(Keys.D) || keyboardState.IsKeyDown(Keys.Right))
+                direction.X += 1;
 
-            if (movement != Vector2.Zero)
+            if (direction != Vector2.Zero)
             {
-                movement.Normalize();
-                var newPosition = _model.Position + movement * _moveSpeed;
+                direction.Normalize();
+                _player.Move(direction, gameTime);
 
-                // Чтоб за рамки не выходил
-                newPosition.X = MathHelper.Clamp(newPosition.X, 0, GameSettings.Dungeon.Width - 1);
-                newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, GameSettings.Dungeon.Height - 1);
+                // Проверяем границы подземелья
+                var position = _player.Position;
+                if (position.X < 0) position.X = 0;
+                if (position.Y < 0) position.Y = 0;
+                if (position.X >= GameSettings.Dungeon.Size.Width) position.X = GameSettings.Dungeon.Size.Width - 1;
+                if (position.Y >= GameSettings.Dungeon.Size.Height) position.Y = GameSettings.Dungeon.Size.Height - 1;
 
-                _model.Position = newPosition;
+                // Обновляем позицию игрока
+                _player.SetPosition(position);
             }
         }
     }

@@ -234,6 +234,63 @@ namespace DungeonFlux.View
             {
                 DrawCorridorBorders(room, position, scale);
             }
+
+            // Отрисовка границ стен в режиме отладки
+            if (GameSettings.Debug.IsDebugModeEnabled)
+            {
+                foreach (var wall in _model.Walls)
+                {
+                    if (wall.Bounds.X / GameSettings.Graphics.RoomSize == roomX && 
+                        wall.Bounds.Y / GameSettings.Graphics.RoomSize == roomY)
+                    {
+                        Rectangle scaledBounds = new Rectangle(
+                            (int)(wall.Bounds.X * scale) - (int)(roomX * GameSettings.Graphics.RoomSize * scale),
+                            (int)(wall.Bounds.Y * scale) - (int)(roomY * GameSettings.Graphics.RoomSize * scale),
+                            (int)(wall.Bounds.Width * scale),
+                            (int)(wall.Bounds.Height * scale)
+                        );
+
+                        Color wallColor = wall.IsCorridor ? Color.Red : Color.Yellow;
+                        if (wall.IsPassable())
+                        {
+                            wallColor = Color.Green;
+                        }
+
+                        DrawRectangleBorder(
+                            new Rectangle(
+                                (int)position.X + scaledBounds.X,
+                                (int)position.Y + scaledBounds.Y,
+                                scaledBounds.Width,
+                                scaledBounds.Height
+                            ),
+                            2,
+                            wallColor
+                        );
+                    }
+                }
+
+                // // Отрисовка хитбокса игрока
+                // if (isPlayerRoom)
+                // {
+                //     Vector2 playerWorld = new Vector2(
+                //         _player.Position.X * GameSettings.Graphics.RoomSize,
+                //         _player.Position.Y * GameSettings.Graphics.RoomSize
+                //     );
+
+                //     var playerBounds = new Rectangle(
+                //         (int)(playerWorld.X * scale + position.X),
+                //         (int)(playerWorld.Y * scale + position.Y),
+                //         (int)(GameSettings.Player.Size * scale),
+                //         (int)(GameSettings.Player.Size * scale)
+                //     );
+
+                //     DrawRectangleBorder(
+                //         playerBounds,
+                //         2,
+                //         Color.Cyan
+                //     );
+                // }
+            }
         }
 
         private void DrawDebugOverlay(int screenWidth, int screenHeight, float scale, Vector2 screenCenter)

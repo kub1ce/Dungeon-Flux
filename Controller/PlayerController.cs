@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using DungeonFlux.Model;
+using System;
 
 namespace DungeonFlux.Controller
 {
@@ -33,17 +34,42 @@ namespace DungeonFlux.Controller
             if (direction != Vector2.Zero)
             {
                 direction.Normalize();
-                _player.Move(direction, gameTime);
+                var delta = direction * GameSettings.Player.MoveSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                
+                // Check X-axis collision
+                var newPositionX = _player.Position + new Vector2(delta.X, 0);
+                var playerBoundsX = new Rectangle(
+                    (int)(newPositionX.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2),
+                    (int)(_player.Position.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2),
+                    GameSettings.Player.Size,
+                    GameSettings.Player.Size
+                );
 
-                // Проверяем границы подземелья
-                var position = _player.Position;
-                if (position.X < 0) position.X = 0;
-                if (position.Y < 0) position.Y = 0;
-                if (position.X >= GameSettings.Dungeon.Size.Width) position.X = GameSettings.Dungeon.Size.Width - 1;
-                if (position.Y >= GameSettings.Dungeon.Size.Height) position.Y = GameSettings.Dungeon.Size.Height - 1;
+                // Check Y-axis collision
+                var newPositionY = _player.Position + new Vector2(0, delta.Y);
+                var playerBoundsY = new Rectangle(
+                    (int)(_player.Position.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2),
+                    (int)(newPositionY.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2),
+                    GameSettings.Player.Size,
+                    GameSettings.Player.Size
+                );
 
-                // Обновляем позицию игрока
-                _player.SetPosition(position);
+                var finalDirection = Vector2.Zero;
+                bool hasCollisionX = _gameModel.CheckCollision(playerBoundsX);
+                bool hasCollisionY = _gameModel.CheckCollision(playerBoundsY);
+
+                if (!hasCollisionX)
+                    finalDirection.X = direction.X;
+
+                if (!hasCollisionY)
+                    finalDirection.Y = direction.Y;
+
+                // Move only if there's valid movement in any direction
+                if (finalDirection != Vector2.Zero)
+                {
+                    finalDirection.Normalize();
+                    _player.Move(finalDirection, gameTime);
+                }
             }
         }
     }

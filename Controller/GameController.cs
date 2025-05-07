@@ -30,6 +30,10 @@ namespace DungeonFlux.Controller
             // TODO: мб можно как-то организовать промерку предыдущей кбд заранее на непохожесть с предыдущей
             // TODO: и вот эти изкейдаун сократятсяы
 
+            // Toggle all doors when P is pressed
+            if (currentKeyboardState.IsKeyDown(Keys.P) && !_previousKeyboardState.IsKeyDown(Keys.P))
+                _model.ToggleAllDoors();
+
             _previousKeyboardState = currentKeyboardState;
         }
     }

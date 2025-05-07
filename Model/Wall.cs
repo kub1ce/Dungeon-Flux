@@ -8,13 +8,17 @@ namespace DungeonFlux.Model
         public bool IsCorridor { get; private set; }
         public int Direction { get; private set; }
         public bool IsConnection { get; private set; }
+        public bool IsDoor { get; private set; }
+        public bool IsOpen { get; private set; }
 
-        public Wall(Rectangle bounds, bool isCorridor, int direction, bool isConnection)
+        public Wall(Rectangle bounds, bool isCorridor, int direction, bool isConnection, bool isDoor = false)
         {
             Bounds = bounds;
             IsCorridor = isCorridor;
             Direction = direction;
             IsConnection = isConnection;
+            IsDoor = isDoor;
+            IsOpen = false;
         }
 
         public bool Intersects(Rectangle other)
@@ -24,7 +28,15 @@ namespace DungeonFlux.Model
 
         public bool IsPassable()
         {
-            return IsConnection;
+            return IsConnection || (IsDoor && IsOpen);
+        }
+
+        public void ToggleDoor()
+        {
+            if (IsDoor)
+            {
+                IsOpen = !IsOpen;
+            }
         }
     }
 } 

@@ -11,6 +11,7 @@ namespace DungeonFlux.Model
         public Vector2 PlayerPosition { get; private set; }
         public bool IsGameOver { get; private set; }
         public List<Wall> Walls { get; private set; }
+        private bool _allDoorsOpen = false;
 
         private readonly DungeonGenerator _dungeonGenerator;
 
@@ -417,6 +418,10 @@ namespace DungeonFlux.Model
                             Walls.Add(new Wall(
                                 new Rectangle(x, y, centerOffset, wallThickness),
                                 false, dir, false));
+                            // Door
+                            Walls.Add(new Wall(
+                                new Rectangle(x + centerOffset, y, corridorWidth, wallThickness),
+                                false, dir, false, true));
                             // Right
                             Walls.Add(new Wall(
                                 new Rectangle(x + centerOffset + corridorWidth, y, size - (centerOffset + corridorWidth), wallThickness),
@@ -428,6 +433,10 @@ namespace DungeonFlux.Model
                             Walls.Add(new Wall(
                                 new Rectangle(x + size - wallThickness, y, wallThickness, centerOffset),
                                 false, dir, false));
+                            // Door
+                            Walls.Add(new Wall(
+                                new Rectangle(x + size - wallThickness, y + centerOffset, wallThickness, corridorWidth),
+                                false, dir, false, true));
                             // Down
                             Walls.Add(new Wall(
                                 new Rectangle(x + size - wallThickness, y + centerOffset + corridorWidth, wallThickness, size - (centerOffset + corridorWidth)),
@@ -439,6 +448,10 @@ namespace DungeonFlux.Model
                             Walls.Add(new Wall(
                                 new Rectangle(x, y + size - wallThickness, centerOffset, wallThickness),
                                 false, dir, false));
+                            // Door
+                            Walls.Add(new Wall(
+                                new Rectangle(x + centerOffset, y + size - wallThickness, corridorWidth, wallThickness),
+                                false, dir, false, true));
                             // Right
                             Walls.Add(new Wall(
                                 new Rectangle(x + centerOffset + corridorWidth, y + size - wallThickness, size - (centerOffset + corridorWidth), wallThickness),
@@ -450,6 +463,10 @@ namespace DungeonFlux.Model
                             Walls.Add(new Wall(
                                 new Rectangle(x, y, wallThickness, centerOffset),
                                 false, dir, false));
+                            // Door
+                            Walls.Add(new Wall(
+                                new Rectangle(x, y + centerOffset, wallThickness, corridorWidth),
+                                false, dir, false, true));
                             // Down
                             Walls.Add(new Wall(
                                 new Rectangle(x, y + centerOffset + corridorWidth, wallThickness, size - (centerOffset + corridorWidth)),
@@ -580,6 +597,18 @@ namespace DungeonFlux.Model
             {
                 IsGameOver = true;
                 Logger.Log("Player reached the exit! Game over.");
+            }
+        }
+
+        public void ToggleAllDoors()
+        {
+            _allDoorsOpen = !_allDoorsOpen;
+            foreach (var wall in Walls)
+            {
+                if (wall.IsDoor)
+                {
+                    wall.ToggleDoor();
+                }
             }
         }
     }

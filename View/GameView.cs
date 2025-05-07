@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using DungeonFlux.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DungeonFlux.View
 {
@@ -157,6 +158,7 @@ namespace DungeonFlux.View
                     _cameraPosition.Y * GameSettings.Graphics.RoomSize * _scale + GameSettings.Graphics.RoomSize * _scale / 2
                 );
 
+            // Draw rooms and walls
             for (int x = minX; x < maxX; x++)
             {
                 for (int y = minY; y < maxY; y++)
@@ -168,16 +170,86 @@ namespace DungeonFlux.View
 
                     DrawRoom(room, position, _scale);
                     DrawWalls(room, position, _scale);
+                }
+            }
 
-                    if (GameSettings.Debug.IsDebugModeEnabled)
+            // Draw doors
+            foreach (var wall in _model.Walls)
+            {
+                if (!wall.IsDoor) continue;
+
+                int roomX = wall.Bounds.X / GameSettings.Graphics.RoomSize;
+                int roomY = wall.Bounds.Y / GameSettings.Graphics.RoomSize;
+
+                if (roomX >= minX && roomX < maxX && roomY >= minY && roomY < maxY)
+                {
+                    Vector2 position = new Vector2(roomX * GameSettings.Graphics.RoomSize, roomY * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
+                    
+                    if (!wall.IsOpen)
                     {
-                        DrawDebugInfo(room, position, _scale, x, y);
+                        Rectangle scaledBounds = new Rectangle(
+                            (int)(position.X + (wall.Bounds.X % GameSettings.Graphics.RoomSize) * _scale),
+                            (int)(position.Y + (wall.Bounds.Y % GameSettings.Graphics.RoomSize) * _scale),
+                            (int)(wall.Bounds.Width * _scale),
+                            (int)(wall.Bounds.Height * _scale)
+                        );
+                        DrawWall(scaledBounds.X, scaledBounds.Y, scaledBounds.Width, scaledBounds.Height, GameSettings.Graphics.WallColors.Room);
                     }
                 }
             }
 
+            // Draw debug info for rooms
             if (GameSettings.Debug.IsDebugModeEnabled)
             {
+                for (int x = minX; x < maxX; x++)
+                {
+                    for (int y = minY; y < maxY; y++)
+                    {
+                        var room = _model.Dungeon[x, y];
+                        if (room == null) continue;
+
+                        Vector2 position = new Vector2(x * GameSettings.Graphics.RoomSize, y * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
+                        DrawDebugInfo(room, position, _scale, x, y);
+                    }
+                }
+
+                // Draw debug info for doors
+                foreach (var wall in _model.Walls)
+                {
+                    if (!wall.IsDoor) continue;
+
+                    int roomX = wall.Bounds.X / GameSettings.Graphics.RoomSize;
+                    int roomY = wall.Bounds.Y / GameSettings.Graphics.RoomSize;
+
+                    if (roomX >= minX && roomX < maxX && roomY >= minY && roomY < maxY)
+                    {
+                        Vector2 position = new Vector2(roomX * GameSettings.Graphics.RoomSize, roomY * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
+                        Rectangle scaledBounds = new Rectangle(
+                            (int)(position.X + (wall.Bounds.X % GameSettings.Graphics.RoomSize) * _scale),
+                            (int)(position.Y + (wall.Bounds.Y % GameSettings.Graphics.RoomSize) * _scale),
+                            (int)(wall.Bounds.Width * _scale),
+                            (int)(wall.Bounds.Height * _scale)
+                        );
+                        
+                        // Draw center line
+                        if (scaledBounds.Width > scaledBounds.Height)
+                        {
+                            int centerY = scaledBounds.Y + scaledBounds.Height / 2;
+                            _spriteBatch.Draw(_wallTexture, 
+                                new Rectangle(scaledBounds.X, centerY - 1, scaledBounds.Width, 2),
+                                wall.IsOpen ? Color.Green : Color.Red);
+                        }
+                        else
+                        {
+                            int centerX = scaledBounds.X + scaledBounds.Width / 2;
+                            _spriteBatch.Draw(_wallTexture, 
+                                new Rectangle(centerX - 1, scaledBounds.Y, 2, scaledBounds.Height),
+                                wall.IsOpen ? Color.Green : Color.Red);
+                        }
+                        DrawRectangleBorder(scaledBounds, 2, wall.IsOpen ? Color.Green : Color.Red);
+                    }
+                }
+
                 DrawDebugOverlay(screenWidth, screenHeight, scale, screenCenter);
             }
         }
@@ -254,6 +326,10 @@ namespace DungeonFlux.View
                         if (wall.IsPassable())
                         {
                             wallColor = Color.Green;
+                        }
+                        else if (wall.IsDoor)
+                        {
+                            wallColor = wall.IsOpen ? Color.Green : Color.Red;
                         }
 
                         DrawRectangleBorder(

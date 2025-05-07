@@ -24,12 +24,20 @@ namespace DungeonFlux.Model
             public static readonly int RoomSize = 1536;
             public static readonly int WallThickness = 32;
             public static readonly int Padding = 0;
-            public static readonly float Scale = .5f;
+            public static readonly float Scale = 1f;
 
             public static class Corridor
             {
                 public const float WidthRatio = 0.3f; // Ширина коридора 30% от размера комнаты
                 public const float CenterOffsetRatio = 0.5f; // Смещение центра коридора
+            }
+
+            public static class WallGeneration
+            {
+                public const float ShortWallLengthRatio = 0.35f; // Длина короткой стены относительно размера комнаты
+                public const float LongWallLengthRatio = 0.67f; // Длина длинной стены относительно размера комнаты
+                public const float ExternalWallLengthRatio = 0.65f; // Длина внешней стены относительно размера комнаты
+                public const float ExternalOffsetRatio = 0.28f; // Смещение внешней стены относительно размера комнаты
             }
 
             public static class RoomColors

@@ -232,7 +232,7 @@ namespace DungeonFlux.View
 
             if (room.Type == RoomType.Corridor)
             {
-                DrawCorridorBorders(room, position, scale);
+                // DrawCorridorBorders(room, position, scale); // ! useless
             }
 
             // Отрисовка границ стен в режиме отладки

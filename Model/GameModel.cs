@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DungeonFlux.Model
 {
@@ -66,70 +67,47 @@ namespace DungeonFlux.Model
 
         private void GenerateCorridorWalls(Room room, Vector2 position, int size, int wallThickness, int corridorWidth, int centerOffset)
         {
-            // ! TODO: Исправить ошибку с неправильным созданием коридоров
-            // For each direction (up, right, down, left)
+            int x = (int)position.X;
+            int y = (int)position.Y;
+            
+            // Count connections and store their directions
+            List<int> connections = new List<int>();
             for (int dir = 0; dir < 4; dir++)
             {
-                bool hasConnection = room.HasConnection(dir);
-                int x = (int)position.X;
-                int y = (int)position.Y;
-
-                if (hasConnection)
+                if (room.HasConnection(dir))
                 {
-                    // For connected sides, create two wall segments with a gap for the corridor
-                    int gapSize = corridorWidth;
-                    int wallLength = (size - gapSize) / 2;
-
-                    switch (dir)
-                    {
-                        case GameSettings.Directions.Up:
-                            // Left
-                            Walls.Add(new Wall(
-                                new Rectangle(x, y + centerOffset, wallLength, wallThickness),
-                                true, dir, false));
-                            // Right
-                            Walls.Add(new Wall(
-                                new Rectangle(x + size - wallLength, y + centerOffset, wallLength, wallThickness),
-                                true, dir, false));
-                            break;
-
-                        case GameSettings.Directions.Right:
-                            // Top
-                            Walls.Add(new Wall(
-                                new Rectangle(x + centerOffset + corridorWidth - wallThickness, y, wallThickness, wallLength),
-                                true, dir, false));
-                            // Down
-                            Walls.Add(new Wall(
-                                new Rectangle(x + centerOffset + corridorWidth - wallThickness, y + size - wallLength, wallThickness, wallLength),
-                                true, dir, false));
-                            break;
-
-                        case GameSettings.Directions.Down:
-                            // Left
-                            Walls.Add(new Wall(
-                                new Rectangle(x, y + centerOffset + corridorWidth - wallThickness, wallLength, wallThickness),
-                                true, dir, false));
-                            // Right
-                            Walls.Add(new Wall(
-                                new Rectangle(x + size - wallLength, y + centerOffset + corridorWidth - wallThickness, wallLength, wallThickness),
-                                true, dir, false));
-                            break;
-
-                        case GameSettings.Directions.Left:
-                            // Top
-                            Walls.Add(new Wall(
-                                new Rectangle(x + centerOffset, y, wallThickness, wallLength),
-                                true, dir, false));
-                            // Down
-                            Walls.Add(new Wall(
-                                new Rectangle(x + centerOffset, y + size - wallLength, wallThickness, wallLength),
-                                true, dir, false));
-                            break;
-                    }
+                    connections.Add(dir);
                 }
-                else
+            }
+
+            switch (connections.Count)
+            {
+                case 2:
+                    HandleTwoConnections(room, x, y, size, wallThickness, corridorWidth, centerOffset, connections);
+                    break;
+                case 3:
+                    HandleThreeConnections(room, x, y, size, wallThickness, corridorWidth, centerOffset, connections);
+                    break;
+                case 4:
+                    HandleFourConnections(room, x, y, size, wallThickness, corridorWidth, centerOffset);
+                    break;
+            }
+        }
+
+        private void HandleTwoConnections(Room room, int x, int y, int size, int wallThickness, int corridorWidth, int centerOffset, List<int> connections)
+        {
+            // Check if connections are opposite
+            bool areOpposite = (connections[0] + 2) % 4 == connections[1];
+
+            if (areOpposite)
+            {
+                // Add long walls on sides without connections
+                int[] sidesWithoutConnections = Enumerable.Range(0, 4)
+                    .Where(dir => !connections.Contains(dir))
+                    .ToArray();
+
+                foreach (int dir in sidesWithoutConnections)
                 {
-                    // For unconnected sides, create a single full wall
                     switch (dir)
                     {
                         case GameSettings.Directions.Up:
@@ -137,25 +115,284 @@ namespace DungeonFlux.Model
                                 new Rectangle(x, y + centerOffset, size, wallThickness),
                                 true, dir, false));
                             break;
-
                         case GameSettings.Directions.Right:
                             Walls.Add(new Wall(
                                 new Rectangle(x + centerOffset + corridorWidth - wallThickness, y, wallThickness, size),
                                 true, dir, false));
                             break;
-
                         case GameSettings.Directions.Down:
                             Walls.Add(new Wall(
                                 new Rectangle(x, y + centerOffset + corridorWidth - wallThickness, size, wallThickness),
                                 true, dir, false));
                             break;
-
                         case GameSettings.Directions.Left:
                             Walls.Add(new Wall(
                                 new Rectangle(x + centerOffset, y, wallThickness, size),
                                 true, dir, false));
                             break;
                     }
+                }
+            }
+            else
+            {
+                float wallLength = size * GameSettings.Graphics.WallGeneration.ShortWallLengthRatio;
+                float longWallLength = size * GameSettings.Graphics.WallGeneration.LongWallLengthRatio;
+                float externalWallLength = size * GameSettings.Graphics.WallGeneration.ExternalWallLengthRatio;
+                float externalOffset = size * GameSettings.Graphics.WallGeneration.ExternalOffsetRatio;
+
+                foreach (int dir in connections)
+                {
+                    // Get adjacent sides (clockwise and counterclockwise)
+                    int clockwiseAdjacent = (dir + 1) % 4;
+                    int counterClockwiseAdjacent = (dir + 3) % 4;
+                    int oppositeSide = (dir + 2) % 4;
+
+                    // Check if adjacent sides have connections
+                    bool hasClockwiseConnection = room.HasConnection(clockwiseAdjacent);
+                    bool hasCounterClockwiseConnection = room.HasConnection(counterClockwiseAdjacent);
+
+                    // Add walls based on adjacent connections
+                    switch (dir)
+                    {
+                        case GameSettings.Directions.Up:
+                            if (hasClockwiseConnection)
+                            {
+                                Walls.Add(new Wall(
+                                    new Rectangle((int)(x + size - wallLength), y + centerOffset, (int)wallLength, wallThickness),
+                                    true, dir, false));
+                                Walls.Add(new Wall(
+                                    new Rectangle((int)(x + size - externalWallLength), (int)(y + centerOffset + externalOffset), (int)externalWallLength, wallThickness),
+                                    true, dir, false));
+                            }
+                            if (hasCounterClockwiseConnection)
+                            {
+                                Walls.Add(new Wall(
+                                    new Rectangle(x, y + centerOffset, (int)wallLength, wallThickness),
+                                    true, dir, false));
+                                Walls.Add(new Wall(
+                                    new Rectangle(x, (int)(y + centerOffset + externalOffset), (int)externalWallLength, wallThickness),
+                                    true, dir, false));
+                            }
+                            break;
+
+                        case GameSettings.Directions.Right:
+                            if (hasClockwiseConnection)
+                            {
+                                Walls.Add(new Wall(
+                                    new Rectangle(x + centerOffset + corridorWidth - wallThickness, (int)(y + size - wallLength), wallThickness, (int)wallLength),
+                                    true, dir, false));
+                                Walls.Add(new Wall(
+                                    new Rectangle((int)(x + centerOffset + corridorWidth - wallThickness - externalOffset), (int)(y + size - externalWallLength), wallThickness, (int)externalWallLength),
+                                    true, dir, false));
+                            }
+                            if (hasCounterClockwiseConnection)
+                            {
+                                Walls.Add(new Wall(
+                                    new Rectangle(x + centerOffset + corridorWidth - wallThickness, y, wallThickness, (int)wallLength),
+                                    true, dir, false));
+                                Walls.Add(new Wall(
+                                    new Rectangle((int)(x + centerOffset + corridorWidth - wallThickness - externalOffset), y, wallThickness, (int)externalWallLength),
+                                    true, dir, false));
+                            }
+                            break;
+
+                        case GameSettings.Directions.Down:
+                            if (hasClockwiseConnection)
+                            {
+                                Walls.Add(new Wall(
+                                    new Rectangle(x, y + centerOffset + corridorWidth - wallThickness, (int)wallLength, wallThickness),
+                                    true, dir, false));
+                                Walls.Add(new Wall(
+                                    new Rectangle(x, (int)(y + centerOffset + corridorWidth - wallThickness - externalOffset), (int)externalWallLength, wallThickness),
+                                    true, dir, false));
+                            }
+                            if (hasCounterClockwiseConnection)
+                            {
+                                Walls.Add(new Wall(
+                                    new Rectangle((int)(x + size - wallLength), y + centerOffset + corridorWidth - wallThickness, (int)wallLength, wallThickness),
+                                    true, dir, false));
+                                Walls.Add(new Wall(
+                                    new Rectangle((int)(x + size - externalWallLength), (int)(y + centerOffset + corridorWidth - wallThickness - externalOffset), (int)externalWallLength, wallThickness),
+                                    true, dir, false));
+                            }
+                            break;
+
+                        case GameSettings.Directions.Left:
+                            if (hasClockwiseConnection)
+                            {
+                                Walls.Add(new Wall(
+                                    new Rectangle(x + centerOffset, y, wallThickness, (int)wallLength),
+                                    true, dir, false));
+                                Walls.Add(new Wall(
+                                    new Rectangle((int)(x + centerOffset + externalOffset), y, wallThickness, (int)externalWallLength),
+                                    true, dir, false));
+                            }
+                            if (hasCounterClockwiseConnection)
+                            {
+                                Walls.Add(new Wall(
+                                    new Rectangle(x + centerOffset, (int)(y + size - wallLength), wallThickness, (int)wallLength),
+                                    true, dir, false));
+                                Walls.Add(new Wall(
+                                    new Rectangle((int)(x + centerOffset + externalOffset), (int)(y + size - externalWallLength), wallThickness, (int)externalWallLength),
+                                    true, dir, false));
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+
+        private void HandleThreeConnections(Room room, int x, int y, int size, int wallThickness, int corridorWidth, int centerOffset, List<int> connections)
+        {
+            // Find the side without connection
+            int sideWithoutConnection = Enumerable.Range(0, 4)
+                .First(dir => !connections.Contains(dir));
+
+            float perpendicularWallLength = size * GameSettings.Graphics.WallGeneration.ShortWallLengthRatio;
+
+            // Add long wall on the side without connection
+            switch (sideWithoutConnection)
+            {
+                case GameSettings.Directions.Up:
+                    Walls.Add(new Wall(
+                        new Rectangle(x, y + centerOffset, size, wallThickness),
+                        true, sideWithoutConnection, false));
+                    break;
+
+                case GameSettings.Directions.Right:
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset + corridorWidth - wallThickness, y, wallThickness, size),
+                        true, sideWithoutConnection, false));
+                    break;
+
+                case GameSettings.Directions.Down:
+                    Walls.Add(new Wall(
+                        new Rectangle(x, y + centerOffset + corridorWidth - wallThickness, size, wallThickness),
+                        true, sideWithoutConnection, false));
+                    break;
+
+                case GameSettings.Directions.Left:
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset, y, wallThickness, size),
+                        true, sideWithoutConnection, false));
+                    break;
+            }
+
+            // Add walls on opposite side
+            int oppositeSide = (sideWithoutConnection + 2) % 4;
+            float shortWallLength = size * GameSettings.Graphics.WallGeneration.ShortWallLengthRatio;
+            int gap = (int)((size - 2 * shortWallLength) / 2);
+
+            switch (oppositeSide)
+            {
+                case GameSettings.Directions.Up:
+                    Walls.Add(new Wall(
+                        new Rectangle(x, y + centerOffset, (int)shortWallLength, wallThickness),
+                        true, oppositeSide, false));
+                    Walls.Add(new Wall(
+                        new Rectangle(x + size - (int)shortWallLength, y + centerOffset, (int)shortWallLength, wallThickness),
+                        true, oppositeSide, false));
+                        
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset, y, wallThickness, (int)shortWallLength),
+                        true, GameSettings.Directions.Left, false));
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset + corridorWidth - wallThickness, y, wallThickness, (int)shortWallLength),
+                        true, GameSettings.Directions.Right, false));
+                    break;
+
+                case GameSettings.Directions.Right:
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset + corridorWidth - wallThickness, y, wallThickness, (int)shortWallLength),
+                        true, oppositeSide, false));
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset + corridorWidth - wallThickness, y + size - (int)shortWallLength, wallThickness, (int)shortWallLength),
+                        true, oppositeSide, false));
+                        
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset + corridorWidth, y + centerOffset, (int)shortWallLength, wallThickness),
+                        true, GameSettings.Directions.Up, false));
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset + corridorWidth, y + centerOffset + corridorWidth - wallThickness, (int)shortWallLength, wallThickness),
+                        true, GameSettings.Directions.Down, false));
+                    break;
+
+                case GameSettings.Directions.Down:
+                    Walls.Add(new Wall(
+                        new Rectangle(x, y + centerOffset + corridorWidth - wallThickness, (int)shortWallLength, wallThickness),
+                        true, oppositeSide, false));
+                    Walls.Add(new Wall(
+                        new Rectangle(x + size - (int)shortWallLength, y + centerOffset + corridorWidth - wallThickness, (int)shortWallLength, wallThickness),
+                        true, oppositeSide, false));
+                        
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset, y + centerOffset + corridorWidth , wallThickness, (int)shortWallLength),
+                        true, GameSettings.Directions.Left, false));
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset + corridorWidth - wallThickness, y + centerOffset + corridorWidth, wallThickness, (int)shortWallLength),
+                        true, GameSettings.Directions.Right, false));
+                    break;
+
+                case GameSettings.Directions.Left:
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset, y, wallThickness, (int)shortWallLength),
+                        true, oppositeSide, false));
+                    Walls.Add(new Wall(
+                        new Rectangle(x + centerOffset, y + size - (int)shortWallLength, wallThickness, (int)shortWallLength),
+                        true, oppositeSide, false));
+
+                    Walls.Add(new Wall(
+                        new Rectangle(x, y + centerOffset, (int)shortWallLength, wallThickness),
+                        true, GameSettings.Directions.Up, false));
+                    Walls.Add(new Wall(
+                        new Rectangle(x, y + centerOffset + corridorWidth - wallThickness, (int)shortWallLength, wallThickness),
+                        true, GameSettings.Directions.Down, false));
+                    break;
+            }
+        }
+
+        private void HandleFourConnections(Room room, int x, int y, int size, int wallThickness, int corridorWidth, int centerOffset)
+        {
+            // For each side, add two short walls
+            for (int dir = 0; dir < 4; dir++)
+            {
+                float shortWallLength = size * GameSettings.Graphics.WallGeneration.ShortWallLengthRatio;
+                int gap = (int)((size - 2 * shortWallLength) / 2);
+
+                switch (dir)
+                {
+                    case GameSettings.Directions.Up:
+                        Walls.Add(new Wall(
+                            new Rectangle(x, y + centerOffset, (int)shortWallLength, wallThickness),
+                            true, dir, false));
+                        Walls.Add(new Wall(
+                            new Rectangle(x + size - (int)shortWallLength, y + centerOffset, (int)shortWallLength, wallThickness),
+                            true, dir, false));
+                        break;
+                    case GameSettings.Directions.Right:
+                        Walls.Add(new Wall(
+                            new Rectangle(x + centerOffset + corridorWidth - wallThickness, y, wallThickness, (int)shortWallLength),
+                            true, dir, false));
+                        Walls.Add(new Wall(
+                            new Rectangle(x + centerOffset + corridorWidth - wallThickness, y + size - (int)shortWallLength, wallThickness, (int)shortWallLength),
+                            true, dir, false));
+                        break;
+                    case GameSettings.Directions.Down:
+                        Walls.Add(new Wall(
+                            new Rectangle(x, y + centerOffset + corridorWidth - wallThickness, (int)shortWallLength, wallThickness),
+                            true, dir, false));
+                        Walls.Add(new Wall(
+                            new Rectangle(x + size - (int)shortWallLength, y + centerOffset + corridorWidth - wallThickness, (int)shortWallLength, wallThickness),
+                            true, dir, false));
+                        break;
+                    case GameSettings.Directions.Left:
+                        Walls.Add(new Wall(
+                            new Rectangle(x + centerOffset, y, wallThickness, (int)shortWallLength),
+                            true, dir, false));
+                        Walls.Add(new Wall(
+                            new Rectangle(x + centerOffset, y + size - (int)shortWallLength, wallThickness, (int)shortWallLength),
+                            true, dir, false));
+                        break;
                 }
             }
         }

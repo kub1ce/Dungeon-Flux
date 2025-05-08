@@ -14,6 +14,11 @@ namespace DungeonFlux.Model
         private bool _allDoorsOpen = false;
 
         private readonly DungeonGenerator _dungeonGenerator;
+        private Vector2 _cameraPosition;
+        private float _scale;
+
+        public Vector2 CameraPosition => _cameraPosition;
+        public float Scale => _scale;
 
         public GameModel()
         {
@@ -24,7 +29,19 @@ namespace DungeonFlux.Model
                 GameSettings.Dungeon.RoomCount.Max
             );
             Walls = new List<Wall>();
+            _cameraPosition = Vector2.Zero;
+            _scale = GameSettings.Graphics.Scale;
             GenerateNewDungeon();
+        }
+
+        public void SetCameraPosition(Vector2 position)
+        {
+            _cameraPosition = position;
+        }
+
+        public void SetScale(float scale)
+        {
+            _scale = scale;
         }
 
         public void GenerateNewDungeon()

@@ -85,10 +85,10 @@ public class DungeonFluxGame : Game
         _model = new GameModel();
         _controller = new GameController(_model);
         _playerModel = new Player(_model.PlayerPosition);
-        _playerController = new PlayerController(_playerModel, _model);
+        _playerController = new PlayerController(_playerModel, _model, GraphicsDevice);
         _view = new GameView(_model, _spriteBatch, _menuFont, _playerModel);
         _playerTexture = Content.Load<Texture2D>("David");
-        _playerView = new PlayerView(_playerModel, _playerTexture, _view);
+        _playerView = new PlayerView(_playerModel, _playerTexture, _view, Content);
         Logger.Log("Game initialized successfully");
     }
 
@@ -129,6 +129,7 @@ public class DungeonFluxGame : Game
                 }
 
                 _controller.Update();
+                _playerModel.Update(gameTime);
                 _playerController.Update(gameTime);
                 _view.UpdateCamera(_playerModel.Position);
             }

@@ -7,7 +7,7 @@ namespace DungeonFlux.Model
     {
         private Vector2 _position;
         private int _health;
-
+        private Weapon _weapon;
 
         public Vector2 Position
         {
@@ -18,10 +18,10 @@ namespace DungeonFlux.Model
                 {
                     _position = value;
                     PositionChanged?.Invoke(_position);
+                    _weapon?.SetPosition(_position);
                 }
             }
         }
-
 
         public int Health
         {
@@ -36,6 +36,7 @@ namespace DungeonFlux.Model
             }
         }
 
+        public Weapon Weapon => _weapon;
 
         public event Action<Vector2> PositionChanged;
         public event Action<int> HealthChanged;
@@ -44,12 +45,24 @@ namespace DungeonFlux.Model
         {
             Position = GameSettings.Player.DefaultStartPosition;
             Health = GameSettings.Player.MaxHealth;
+            InitializeWeapon();
         }
 
         public Player(Vector2 position)
         {
             Position = position;
             Health = GameSettings.Player.MaxHealth;
+            InitializeWeapon();
+        }
+
+        private void InitializeWeapon()
+        {
+            _weapon = new Weapon(
+                GameSettings.Weapon.Default.Cooldown,
+                GameSettings.Weapon.Default.Damage,
+                GameSettings.Weapon.Default.Range
+            );
+            _weapon.SetPosition(Position);
         }
 
         public void Move(Vector2 direction, GameTime gameTime)
@@ -65,6 +78,20 @@ namespace DungeonFlux.Model
         public void SetPosition(Vector2 position)
         {
             Position = position;
+        }
+
+        public void Update(GameTime gameTime)
+        {
+            _weapon?.Update(gameTime);
+        }
+
+        public bool Attack(Vector2 direction)
+        {
+            if (_weapon == null)
+                return false;
+
+            _weapon.Direction = direction;
+            return _weapon.Attack();
         }
 
         public void TakeDamage(int amount)

@@ -16,6 +16,25 @@ namespace DungeonFlux.Model
             public static readonly int Size = 112;
         }
 
+        // Weapon settings
+        public static class Weapon
+        {
+            public static class Default
+            {
+                public const float Cooldown = 0.5f;  // 0.5 секунды между атаками
+                public const int Damage = 10;        // 10 единиц урона
+                public const float Range = 480f;     // дальности атаки
+            }
+
+            public static class AttackEffect
+            {
+                public const float Duration = 0.15f; // Длительность эффекта в секундах
+                public const float Range = Default.Range;
+                public static readonly Color Color = Color.Yellow;
+                public const int Thickness = 4; // Толщина линии
+            }
+        }
+
         // Graphics settings
         public static class Graphics
         {
@@ -24,7 +43,7 @@ namespace DungeonFlux.Model
             public static readonly int RoomSize = 1536;
             public static readonly int WallThickness = 32;
             public static readonly int Padding = 0;
-            public static readonly float Scale = 1f;
+            public static readonly float Scale = .5f;
 
             public static class Corridor
             {
@@ -42,12 +61,13 @@ namespace DungeonFlux.Model
 
             public static class RoomColors
             {
+                public static readonly Color Default = Color.Gray;
+
                 public static readonly Color StartRoom = Color.Green;
                 public static readonly Color ExitRoom = Color.Red;
                 public static readonly Color BossRoom = Color.Purple;
                 public static readonly Color Corridor = Color.Gray;
-                public static readonly Color DeadEnd = Color.Orange;
-                public static readonly Color Default = Color.White;
+                public static readonly Color DeadEnd = Default; // Color.Orange;
             }
 
             public static class WallColors

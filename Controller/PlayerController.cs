@@ -10,16 +10,21 @@ namespace DungeonFlux.Controller
     {
         private readonly Player _player;
         private readonly GameModel _gameModel;
+        private readonly GraphicsDevice _graphicsDevice;
+        private MouseState _previousMouseState;
 
-        public PlayerController(Player player, GameModel gameModel)
+        public PlayerController(Player player, GameModel gameModel, GraphicsDevice graphicsDevice)
         {
             _player = player;
             _gameModel = gameModel;
+            _graphicsDevice = graphicsDevice;
+            _previousMouseState = Mouse.GetState();
         }
 
         public void Update(GameTime gameTime)
         {
             var keyboardState = Keyboard.GetState();
+            var mouseState = Mouse.GetState();
             var direction = Vector2.Zero;
 
             if (keyboardState.IsKeyDown(Keys.W) || keyboardState.IsKeyDown(Keys.Up))
@@ -71,6 +76,33 @@ namespace DungeonFlux.Controller
                     _player.Move(finalDirection, gameTime);
                 }
             }
+
+            if (mouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released)
+            {
+                var viewport = _graphicsDevice.Viewport;
+                var mousePosition = new Vector2(mouseState.X, mouseState.Y);
+
+                Vector2 mouseWorld = (mousePosition - new Vector2(viewport.Width / 2, viewport.Height / 2)) / (_gameModel.Scale * GameSettings.Graphics.RoomSize) + _gameModel.CameraPosition;
+
+                Vector2 weaponCenter = _player.Position + new Vector2(
+                    GameSettings.Player.Size / (2f * GameSettings.Graphics.RoomSize),
+                    GameSettings.Player.Size / (2f * GameSettings.Graphics.RoomSize)
+                );
+                weaponCenter += new Vector2(
+                    GameSettings.Player.Size * 0.1f / GameSettings.Graphics.RoomSize,
+                    GameSettings.Player.Size * 0.15f / GameSettings.Graphics.RoomSize
+                );
+
+                var attackDirection = mouseWorld - weaponCenter;
+
+                if (attackDirection != Vector2.Zero)
+                {
+                    attackDirection.Normalize();
+                    _player.Attack(attackDirection);
+                }
+            }
+
+            _previousMouseState = mouseState;
         }
     }
 }

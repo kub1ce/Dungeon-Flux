@@ -24,9 +24,11 @@ namespace DungeonFlux.View
         private readonly SpriteFont _font;
         private readonly Player _player;
         private Vector2 _dungeonOffset;
-        private Vector2 _cameraPosition;
-        private float _scale => GameSettings.Graphics.Scale;
         private List<WallInfo> _walls = new List<WallInfo>();
+
+        public SpriteBatch SpriteBatch => _spriteBatch;
+        public Vector2 CameraPosition => _model.CameraPosition;
+        public float Scale => _model.Scale;
 
         public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player)
         {
@@ -65,7 +67,7 @@ namespace DungeonFlux.View
         {
             int screenWidth = _spriteBatch.GraphicsDevice.Viewport.Width;
             int screenHeight = _spriteBatch.GraphicsDevice.Viewport.Height;
-            float scale = _scale;
+            float scale = Scale;
 
             float boxWidthPx = GameSettings.Player.Size * GameSettings.Camera.BoundingBox.WidthInPlayers * scale;
             float boxHeightPx = GameSettings.Player.Size * GameSettings.Camera.BoundingBox.HeightInPlayers * scale;
@@ -74,7 +76,7 @@ namespace DungeonFlux.View
             float boxWidthWorld = boxWidthPx / scale;
             float boxHeightWorld = boxHeightPx / scale;
 
-            Vector2 camera = _cameraPosition;
+            Vector2 camera = CameraPosition;
             if (camera == Vector2.Zero)
                 camera = playerPosition;
 
@@ -104,12 +106,12 @@ namespace DungeonFlux.View
             camera.X = MathHelper.Clamp(camera.X, minX, maxX);
             camera.Y = MathHelper.Clamp(camera.Y, minY, maxY);
 
-            _cameraPosition = camera;
+            _model.SetCameraPosition(camera);
         }
 
         private (float left, float top, float width, float height) GetBoundingBoxWorldRect()
         {
-            float scale = _scale;
+            float scale = Scale;
             float boxWidthPx = GameSettings.Player.Size * GameSettings.Camera.BoundingBox.WidthInPlayers * scale;
             float boxHeightPx = GameSettings.Player.Size * GameSettings.Camera.BoundingBox.HeightInPlayers * scale;
             int screenWidth = _spriteBatch.GraphicsDevice.Viewport.Width;
@@ -118,8 +120,8 @@ namespace DungeonFlux.View
             boxHeightPx = Math.Min(boxHeightPx, screenHeight * GameSettings.Camera.ScreenLimits.MaxHeightFraction);
             float boxWidthWorld = boxWidthPx / scale;
             float boxHeightWorld = boxHeightPx / scale;
-            float camCenterX = _cameraPosition.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
-            float camCenterY = _cameraPosition.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float camCenterX = CameraPosition.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float camCenterY = CameraPosition.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
             float left = camCenterX - boxWidthWorld / 2;
             float top = camCenterY - boxHeightWorld / 2;
             return (left, top, boxWidthWorld, boxHeightWorld);
@@ -134,18 +136,18 @@ namespace DungeonFlux.View
 
             int screenWidth = _spriteBatch.GraphicsDevice.Viewport.Width;
             int screenHeight = _spriteBatch.GraphicsDevice.Viewport.Height;
-            float scale = _scale;
+            float scale = Scale;
             Vector2 screenCenter = new Vector2(screenWidth / 2, screenHeight / 2);
             Vector2 cameraWorldOrigin = new Vector2(
-                _cameraPosition.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2,
-                _cameraPosition.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2
+                CameraPosition.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2,
+                CameraPosition.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2
             );
 
-            int roomsOnScreenX = (int)Math.Ceiling(screenWidth / (GameSettings.Graphics.RoomSize * _scale));
-            int roomsOnScreenY = (int)Math.Ceiling(screenHeight / (GameSettings.Graphics.RoomSize * _scale));
+            int roomsOnScreenX = (int)Math.Ceiling(screenWidth / (GameSettings.Graphics.RoomSize * scale));
+            int roomsOnScreenY = (int)Math.Ceiling(screenHeight / (GameSettings.Graphics.RoomSize * scale));
 
-            int camX = (int)_cameraPosition.X;
-            int camY = (int)_cameraPosition.Y;
+            int camX = (int)CameraPosition.X;
+            int camY = (int)CameraPosition.Y;
 
             int minX = Math.Max(0, camX - roomsOnScreenX / 2 - 1);
             int maxX = Math.Min(_model.Dungeon.GetLength(0), camX + roomsOnScreenX / 2 + 2);
@@ -154,8 +156,8 @@ namespace DungeonFlux.View
 
             Vector2 cameraOffset = screenCenter - 
                 new Vector2(
-                    _cameraPosition.X * GameSettings.Graphics.RoomSize * _scale + GameSettings.Graphics.RoomSize * _scale / 2, 
-                    _cameraPosition.Y * GameSettings.Graphics.RoomSize * _scale + GameSettings.Graphics.RoomSize * _scale / 2
+                    CameraPosition.X * GameSettings.Graphics.RoomSize * scale + GameSettings.Graphics.RoomSize * scale / 2, 
+                    CameraPosition.Y * GameSettings.Graphics.RoomSize * scale + GameSettings.Graphics.RoomSize * scale / 2
                 );
 
             // Draw rooms and walls
@@ -166,10 +168,10 @@ namespace DungeonFlux.View
                     var room = _model.Dungeon[x, y];
                     if (room == null) continue;
 
-                    Vector2 position = new Vector2(x * GameSettings.Graphics.RoomSize, y * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
+                    Vector2 position = new Vector2(x * GameSettings.Graphics.RoomSize, y * GameSettings.Graphics.RoomSize) * scale + cameraOffset;
 
-                    DrawRoom(room, position, _scale);
-                    DrawWalls(room, position, _scale);
+                    DrawRoom(room, position, scale);
+                    DrawWalls(room, position, scale);
                 }
             }
 
@@ -183,15 +185,15 @@ namespace DungeonFlux.View
 
                 if (roomX >= minX && roomX < maxX && roomY >= minY && roomY < maxY)
                 {
-                    Vector2 position = new Vector2(roomX * GameSettings.Graphics.RoomSize, roomY * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
+                    Vector2 position = new Vector2(roomX * GameSettings.Graphics.RoomSize, roomY * GameSettings.Graphics.RoomSize) * scale + cameraOffset;
                     
                     if (!wall.IsOpen)
                     {
                         Rectangle scaledBounds = new Rectangle(
-                            (int)(position.X + (wall.Bounds.X % GameSettings.Graphics.RoomSize) * _scale),
-                            (int)(position.Y + (wall.Bounds.Y % GameSettings.Graphics.RoomSize) * _scale),
-                            (int)(wall.Bounds.Width * _scale),
-                            (int)(wall.Bounds.Height * _scale)
+                            (int)(position.X + (wall.Bounds.X % GameSettings.Graphics.RoomSize) * scale),
+                            (int)(position.Y + (wall.Bounds.Y % GameSettings.Graphics.RoomSize) * scale),
+                            (int)(wall.Bounds.Width * scale),
+                            (int)(wall.Bounds.Height * scale)
                         );
                         DrawWall(scaledBounds.X, scaledBounds.Y, scaledBounds.Width, scaledBounds.Height, GameSettings.Graphics.WallColors.Room);
                     }
@@ -208,8 +210,8 @@ namespace DungeonFlux.View
                         var room = _model.Dungeon[x, y];
                         if (room == null) continue;
 
-                        Vector2 position = new Vector2(x * GameSettings.Graphics.RoomSize, y * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
-                        DrawDebugInfo(room, position, _scale, x, y);
+                        Vector2 position = new Vector2(x * GameSettings.Graphics.RoomSize, y * GameSettings.Graphics.RoomSize) * scale + cameraOffset;
+                        DrawDebugInfo(room, position, scale, x, y);
                     }
                 }
 
@@ -223,12 +225,12 @@ namespace DungeonFlux.View
 
                     if (roomX >= minX && roomX < maxX && roomY >= minY && roomY < maxY)
                     {
-                        Vector2 position = new Vector2(roomX * GameSettings.Graphics.RoomSize, roomY * GameSettings.Graphics.RoomSize) * _scale + cameraOffset;
+                        Vector2 position = new Vector2(roomX * GameSettings.Graphics.RoomSize, roomY * GameSettings.Graphics.RoomSize) * scale + cameraOffset;
                         Rectangle scaledBounds = new Rectangle(
-                            (int)(position.X + (wall.Bounds.X % GameSettings.Graphics.RoomSize) * _scale),
-                            (int)(position.Y + (wall.Bounds.Y % GameSettings.Graphics.RoomSize) * _scale),
-                            (int)(wall.Bounds.Width * _scale),
-                            (int)(wall.Bounds.Height * _scale)
+                            (int)(position.X + (wall.Bounds.X % GameSettings.Graphics.RoomSize) * scale),
+                            (int)(position.Y + (wall.Bounds.Y % GameSettings.Graphics.RoomSize) * scale),
+                            (int)(wall.Bounds.Width * scale),
+                            (int)(wall.Bounds.Height * scale)
                         );
                         
                         // Draw center line
@@ -389,7 +391,8 @@ namespace DungeonFlux.View
                     string debugInfo =
                         $"Current Room Type: {roomType}\n" +
                         $"XY: {_player.Position.X:F2} {_player.Position.Y:F2}\n" +
-                        $"Room: {playerRoomX} {playerRoomY}";
+                        $"Room: {playerRoomX} {playerRoomY}\n" +
+                        $"XP: {_player.Health}";
                     _spriteBatch.DrawString(_font, debugInfo, new Vector2(10, 10), Color.DarkCyan);
                 }
             }
@@ -403,7 +406,7 @@ namespace DungeonFlux.View
         {
             var (boxLeftWorld, boxTopWorld, boxWidthWorld, boxHeightWorld) = GetBoundingBoxWorldRect();
             Vector2 boxWorldPos = new Vector2(boxLeftWorld, boxTopWorld);
-            Vector2 boxScreenPos = (boxWorldPos - _cameraPosition * GameSettings.Graphics.RoomSize - new Vector2(GameSettings.Graphics.RoomSize / 2)) * scale + screenCenter;
+            Vector2 boxScreenPos = (boxWorldPos - CameraPosition * GameSettings.Graphics.RoomSize - new Vector2(GameSettings.Graphics.RoomSize / 2)) * scale + screenCenter;
             float boxWidthPx = boxWidthWorld * scale;
             float boxHeightPx = boxHeightWorld * scale;
 
@@ -749,8 +752,5 @@ namespace DungeonFlux.View
                     GameSettings.Debug.CorridorBorder.Color);
             }
         }
-
-        public Vector2 CameraPosition => _cameraPosition;
-        public float Scale => _scale;
     }
 }

@@ -12,6 +12,7 @@ namespace DungeonFlux.Model
         public bool IsVisited { get; set; }
         public bool[] Connections { get; private set; }
         public Rectangle Bounds => new Rectangle(Position, Size);
+        public List<Enemy> Enemies { get; set; } = new List<Enemy>();
 
         public Room(Point position, Point size, RoomType type)
         {

@@ -22,7 +22,7 @@ namespace DungeonFlux.Model
             public static class Default
             {
                 public const float Cooldown = 0.5f;  // 0.5 секунды между атаками
-                public const int Damage = 10;        // 10 единиц урона
+                public const int Damage = 30;        // 10 единиц урона
                 public const float Range = 480f;     // дальности атаки
             }
 
@@ -43,7 +43,7 @@ namespace DungeonFlux.Model
             public static readonly int RoomSize = 1536;
             public static readonly int WallThickness = 32;
             public static readonly int Padding = 0;
-            public static readonly float Scale = .5f;
+            public static readonly float Scale = 1f;
 
             public static class Corridor
             {

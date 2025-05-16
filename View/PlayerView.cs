@@ -48,6 +48,18 @@ namespace DungeonFlux.View
                     new Rectangle((int)position.X, (int)position.Y, playerSize, playerSize), 
                     Color.White);
 
+                // Хитбокс игрока в режиме отладки
+                if (GameSettings.Debug.IsDebugModeEnabled)
+                {
+                    Rectangle hitbox = new Rectangle((int)position.X, (int)position.Y, playerSize, playerSize);
+                    spriteBatch.Draw(_pixel, hitbox, null, Color.Cyan * 0.3f, 0f, Vector2.Zero, SpriteEffects.None, 1f);
+                    int border = 2;
+                    spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y, hitbox.Width, border), Color.Cyan); // top
+                    spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y + hitbox.Height - border, hitbox.Width, border), Color.Cyan); // bottom
+                    spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y, border, hitbox.Height), Color.Cyan); // left
+                    spriteBatch.Draw(_pixel, new Rectangle(hitbox.X + hitbox.Width - border, hitbox.Y, border, hitbox.Height), Color.Cyan); // right
+                }
+
                 // Отрисовка оружия
                 Vector2 weaponPosition = position + new Vector2(playerSize / 2, playerSize / 2);
                 float weaponAngle = 0f;
@@ -78,7 +90,7 @@ namespace DungeonFlux.View
                 {
                     Vector2 effectStart = weaponPosition;
                     
-                    Vector2 effectEnd = effectStart + attackEffect.Direction * _model.Weapon.Range * scale;
+                    Vector2 effectEnd = effectStart + attackEffect.Direction * _model.Weapon.Range;
 
                     Vector2 direction = effectEnd - effectStart;
                     float length = _model.Weapon.Range * scale;

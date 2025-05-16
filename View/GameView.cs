@@ -25,12 +25,14 @@ namespace DungeonFlux.View
         private readonly Player _player;
         private Vector2 _dungeonOffset;
         private List<WallInfo> _walls = new List<WallInfo>();
+        private Texture2D _enemyTexture;
+        private Dictionary<Enemy, EnemyView> _enemyViews = new();
 
         public SpriteBatch SpriteBatch => _spriteBatch;
         public Vector2 CameraPosition => _model.CameraPosition;
         public float Scale => _model.Scale;
 
-        public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player)
+        public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player, Texture2D enemyTexture)
         {
             _model = model;
             _spriteBatch = spriteBatch;
@@ -44,6 +46,7 @@ namespace DungeonFlux.View
             _wallTexture.SetData(new[] { Color.White });
 
             CalculateDungeonOffset();
+            _enemyTexture = enemyTexture;
         }
 
         private void CalculateDungeonOffset()
@@ -196,6 +199,22 @@ namespace DungeonFlux.View
                             (int)(wall.Bounds.Height * scale)
                         );
                         DrawWall(scaledBounds.X, scaledBounds.Y, scaledBounds.Width, scaledBounds.Height, GameSettings.Graphics.WallColors.Room);
+                    }
+                }
+            }
+
+            // Draw enemies
+            for (int x = minX; x < maxX; x++)
+            {
+                for (int y = minY; y < maxY; y++)
+                {
+                    var room = _model.Dungeon[x, y];
+                    if (room == null) continue;
+                    foreach (var enemy in room.Enemies)
+                    {
+                        if (!_enemyViews.ContainsKey(enemy))
+                            _enemyViews[enemy] = new EnemyView(enemy, _enemyTexture, this, _font);
+                        _enemyViews[enemy].Draw(_spriteBatch);
                     }
                 }
             }

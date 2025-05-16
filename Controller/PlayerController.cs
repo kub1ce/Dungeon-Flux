@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using DungeonFlux.Model;
 using System;
+using System.Linq;
 
 namespace DungeonFlux.Controller
 {
@@ -12,17 +13,23 @@ namespace DungeonFlux.Controller
         private readonly GameModel _gameModel;
         private readonly GraphicsDevice _graphicsDevice;
         private MouseState _previousMouseState;
+        private readonly Game _game;
 
-        public PlayerController(Player player, GameModel gameModel, GraphicsDevice graphicsDevice)
+        public PlayerController(Player player, GameModel gameModel, GraphicsDevice graphicsDevice, Game game)
         {
             _player = player;
             _gameModel = gameModel;
             _graphicsDevice = graphicsDevice;
+            _game = game;
             _previousMouseState = Mouse.GetState();
         }
 
         public void Update(GameTime gameTime)
         {
+            // Skip input processing if window is not active
+            if (!_game.IsActive)
+                return;
+
             var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
             var direction = Vector2.Zero;

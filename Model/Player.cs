@@ -8,6 +8,7 @@ namespace DungeonFlux.Model
         private Vector2 _position;
         private int _health;
         private Weapon _weapon;
+        private GameModel _gameModel;
 
         public Vector2 Position
         {
@@ -55,12 +56,21 @@ namespace DungeonFlux.Model
             InitializeWeapon();
         }
 
+        public Player(Vector2 position, GameModel gameModel)
+        {
+            _gameModel = gameModel;
+            Position = position;
+            Health = GameSettings.Player.MaxHealth;
+            InitializeWeapon();
+        }
+
         private void InitializeWeapon()
         {
             _weapon = new Weapon(
                 GameSettings.Weapon.Default.Cooldown,
                 GameSettings.Weapon.Default.Damage,
-                GameSettings.Weapon.Default.Range
+                GameSettings.Weapon.Default.Range,
+                _gameModel
             );
             _weapon.SetPosition(Position);
         }

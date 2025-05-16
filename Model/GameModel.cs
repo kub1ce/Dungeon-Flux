@@ -52,6 +52,19 @@ namespace DungeonFlux.Model
             SetPlayerStartPosition();
             GenerateWalls();
             IsGameOver = false;
+
+            // Add enemies to enemy rooms
+            for (int x = 0; x < Dungeon.GetLength(0); x++)
+            {
+                for (int y = 0; y < Dungeon.GetLength(1); y++)
+                {
+                    var room = Dungeon[x, y];
+                    if (room != null)
+                    {
+                        room.Enemies.Add(new Enemy(new Vector2(x, y)));
+                    }
+                }
+            }
         }
 
         private void GenerateWalls()

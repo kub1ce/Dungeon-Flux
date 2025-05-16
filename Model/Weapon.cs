@@ -12,6 +12,7 @@ namespace DungeonFlux.Model
         private Vector2 _position;
         private Vector2 _direction;
         private AttackEffect _attackEffect;
+        private GameModel _gameModel;
 
         public Vector2 Position
         {
@@ -49,10 +50,11 @@ namespace DungeonFlux.Model
         public event Action<Vector2> DirectionChanged;
         public event Action OnAttack;
 
-        public Weapon(float cooldown, int damage, float range)
+        public Weapon(float cooldown, int damage, float range, GameModel gameModel)
         {
             _cooldown = cooldown;
             _damage = damage;
+            _damage = 30; // ! временно для тестов. урон равен здорьвью врага, чтобы убить его за 1 удар
             _range = range;
             _currentCooldown = 0;
             _direction = Vector2.Zero;
@@ -60,6 +62,7 @@ namespace DungeonFlux.Model
                 GameSettings.Weapon.AttackEffect.Duration,
                 GameSettings.Weapon.AttackEffect.Range
             );
+            _gameModel = gameModel;
         }
 
         public void Update(GameTime gameTime)

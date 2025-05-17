@@ -59,7 +59,7 @@ namespace DungeonFlux.Model
                 for (int y = 0; y < Dungeon.GetLength(1); y++)
                 {
                     var room = Dungeon[x, y];
-                    if (room != null)
+                    if (room != null && room.Type != RoomType.Corridor && room.Type != RoomType.Start && room.Type != RoomType.Exit)
                     {
                         room.Enemies.Add(new Enemy(new Vector2(x, y)));
                     }

@@ -12,6 +12,7 @@ namespace DungeonFlux.Model
         public bool IsGameOver { get; private set; }
         public List<Wall> Walls { get; private set; }
         private bool _allDoorsOpen = false;
+        private Player _player;
 
         private readonly DungeonGenerator _dungeonGenerator;
         private Vector2 _cameraPosition;
@@ -44,6 +45,11 @@ namespace DungeonFlux.Model
             _scale = scale;
         }
 
+        public void SetPlayer(Player player)
+        {
+            _player = player;
+        }
+
         public void GenerateNewDungeon()
         {
             Dungeon = _dungeonGenerator.Generate();
@@ -61,7 +67,9 @@ namespace DungeonFlux.Model
                     var room = Dungeon[x, y];
                     if (room != null && room.Type != RoomType.Corridor && room.Type != RoomType.Start && room.Type != RoomType.Exit)
                     {
-                        room.Enemies.Add(new Enemy(new Vector2(x, y)));
+                        var enemy = new Enemy(new Vector2(x, y));
+                        enemy.Room = room;
+                        room.Enemies.Add(enemy);
                     }
                 }
             }
@@ -640,6 +648,16 @@ namespace DungeonFlux.Model
                     wall.ToggleDoor();
                 }
             }
+        }
+
+        public void Update(GameTime gameTime)
+        {
+            UpdateEnemies(gameTime);
+        }
+
+        private void UpdateEnemies(GameTime gameTime)
+        {
+            return;
         }
     }
 }

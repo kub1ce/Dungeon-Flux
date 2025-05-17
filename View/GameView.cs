@@ -31,6 +31,7 @@ namespace DungeonFlux.View
         public SpriteBatch SpriteBatch => _spriteBatch;
         public Vector2 CameraPosition => _model.CameraPosition;
         public float Scale => _model.Scale;
+        public Room PlayerRoom { get; private set; }
 
         public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player, Texture2D enemyTexture)
         {
@@ -222,6 +223,11 @@ namespace DungeonFlux.View
             // Draw debug info for rooms
             if (GameSettings.Debug.IsDebugModeEnabled)
             {
+                // Update player's current room
+                int playerRoomX = (int)Math.Round(_player.Position.X);
+                int playerRoomY = (int)Math.Round(_player.Position.Y);
+                PlayerRoom = _model.Dungeon[playerRoomX, playerRoomY];
+
                 for (int x = minX; x < maxX; x++)
                 {
                     for (int y = minY; y < maxY; y++)
@@ -258,16 +264,16 @@ namespace DungeonFlux.View
                             int centerY = scaledBounds.Y + scaledBounds.Height / 2;
                             _spriteBatch.Draw(_wallTexture, 
                                 new Rectangle(scaledBounds.X, centerY - 1, scaledBounds.Width, 2),
-                                wall.IsOpen ? Color.Green : Color.Red);
+                                wall.IsOpen ? Color.LimeGreen : Color.Red);
                         }
                         else
                         {
                             int centerX = scaledBounds.X + scaledBounds.Width / 2;
                             _spriteBatch.Draw(_wallTexture, 
                                 new Rectangle(centerX - 1, scaledBounds.Y, 2, scaledBounds.Height),
-                                wall.IsOpen ? Color.Green : Color.Red);
+                                wall.IsOpen ? Color.LimeGreen : Color.Red);
                         }
-                        DrawRectangleBorder(scaledBounds, 2, wall.IsOpen ? Color.Green : Color.Red);
+                        DrawRectangleBorder(scaledBounds, 2, wall.IsOpen ? Color.LimeGreen : Color.Red);
                     }
                 }
 
@@ -346,11 +352,11 @@ namespace DungeonFlux.View
                         Color wallColor = wall.IsCorridor ? Color.Red : Color.Yellow;
                         if (wall.IsPassable())
                         {
-                            wallColor = Color.Green;
+                            wallColor = Color.LimeGreen;
                         }
                         else if (wall.IsDoor)
                         {
-                            wallColor = wall.IsOpen ? Color.Green : Color.Red;
+                            wallColor = wall.IsOpen ? Color.LimeGreen : Color.Red;
                         }
 
                         DrawRectangleBorder(
@@ -365,28 +371,6 @@ namespace DungeonFlux.View
                         );
                     }
                 }
-
-                // // Отрисовка хитбокса игрока
-                // if (isPlayerRoom)
-                // {
-                //     Vector2 playerWorld = new Vector2(
-                //         _player.Position.X * GameSettings.Graphics.RoomSize,
-                //         _player.Position.Y * GameSettings.Graphics.RoomSize
-                //     );
-
-                //     var playerBounds = new Rectangle(
-                //         (int)(playerWorld.X * scale + position.X),
-                //         (int)(playerWorld.Y * scale + position.Y),
-                //         (int)(GameSettings.Player.Size * scale),
-                //         (int)(GameSettings.Player.Size * scale)
-                //     );
-
-                //     DrawRectangleBorder(
-                //         playerBounds,
-                //         2,
-                //         Color.Cyan
-                //     );
-                // }
             }
         }
 
@@ -406,12 +390,14 @@ namespace DungeonFlux.View
                     playerRoomX >= 0 && playerRoomX < _model.Dungeon.GetLength(0) &&
                     playerRoomY >= 0 && playerRoomY < _model.Dungeon.GetLength(1))
                 {
-                    string roomType = _model.Dungeon[playerRoomX, playerRoomY]?.Type.ToString() ?? "null";
+                    var currentRoom = _model.Dungeon[playerRoomX, playerRoomY];
+                    string roomType = currentRoom?.Type.ToString() ?? "null";
                     string debugInfo =
                         $"Current Room Type: {roomType}\n" +
                         $"XY: {_player.Position.X:F2} {_player.Position.Y:F2}\n" +
                         $"Room: {playerRoomX} {playerRoomY}\n" +
-                        $"XP: {_player.Health}";
+                        $"XP: {_player.Health}\n" +
+                        $"Enemies: {currentRoom?.Enemies.Count(e => e.IsAlive) ?? 0}";
                     _spriteBatch.DrawString(_font, debugInfo, new Vector2(10, 10), Color.DarkCyan);
                 }
             }

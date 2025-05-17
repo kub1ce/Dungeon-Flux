@@ -86,6 +86,7 @@ public class DungeonFluxGame : Game
         _model = new GameModel();
         _controller = new GameController(_model);
         _playerModel = new Player(_model.PlayerPosition, _model);
+        _model.SetPlayer(_playerModel);
         _playerController = new PlayerController(_playerModel, _model, GraphicsDevice, this);
         _playerTexture = Content.Load<Texture2D>("David");
         _enemyTexture = Content.Load<Texture2D>("Timarokk");
@@ -133,6 +134,7 @@ public class DungeonFluxGame : Game
                 _controller.Update();
                 _playerModel.Update(gameTime);
                 _playerController.Update(gameTime);
+                _model.Update(gameTime);
                 _view.UpdateCamera(_playerModel.Position);
             }
 

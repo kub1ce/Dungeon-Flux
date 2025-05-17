@@ -43,12 +43,19 @@ namespace DungeonFlux.View
             if (GameSettings.Debug.IsDebugModeEnabled)
             {
                 Rectangle hitbox = new Rectangle((int)position.X, (int)position.Y, enemySize, enemySize);
-                spriteBatch.Draw(_pixel, hitbox, null, Color.Red * 0.3f, 0f, Vector2.Zero, SpriteEffects.None, 1f);
+                
+                Color hitboxColor = Color.Red;
+                if (_model.Room != null && _gameView.PlayerRoom != null && _model.Room == _gameView.PlayerRoom)
+                {
+                    hitboxColor = Color.Orange;
+                }
+                
+                spriteBatch.Draw(_pixel, hitbox, null, hitboxColor * 0.3f, 0f, Vector2.Zero, SpriteEffects.None, 1f);
                 int border = 2;
-                spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y, hitbox.Width, border), Color.Red); // top
-                spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y + hitbox.Height - border, hitbox.Width, border), Color.Red); // bottom
-                spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y, border, hitbox.Height), Color.Red); // left
-                spriteBatch.Draw(_pixel, new Rectangle(hitbox.X + hitbox.Width - border, hitbox.Y, border, hitbox.Height), Color.Red); // right
+                spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y, hitbox.Width, border), hitboxColor); // top
+                spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y + hitbox.Height - border, hitbox.Width, border), hitboxColor); // bottom
+                spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y, border, hitbox.Height), hitboxColor); // left
+                spriteBatch.Draw(_pixel, new Rectangle(hitbox.X + hitbox.Width - border, hitbox.Y, border, hitbox.Height), hitboxColor); // right
 
                 var positionText = $"{_model.Position.X:F2} {_model.Position.Y:F2}";
                 var healthText = $"{_model.Health}";

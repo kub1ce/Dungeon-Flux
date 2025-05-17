@@ -10,6 +10,13 @@ namespace DungeonFlux.Model
         public bool IsAlive => Health > 0;
         public Room Room { get; set; }
         private float _moveSpeed = 0.48f; // Скорость движения врага
+        private const float ATTACK_RANGE = 0.08f; // Дистанция атаки
+        private float _attackCooldown = 0.6f; // Время между атаками
+        private float _currentCooldown = 0f; // Текущее время перезарядки
+        // TODO: Вынести в константы
+        // TODO: Добавить анимацию атаки
+        // TODO: Вынести Дистанцию приближения к врагу и дистанцию атаки (if атака < приближения, в логгах варним)
+        public bool CanAttack => _currentCooldown <= 0;
 
         public Enemy(Vector2 position, int health = 30)
         {
@@ -23,14 +30,41 @@ namespace DungeonFlux.Model
             Health = System.Math.Max(0, Health - amount);
         }
 
+        public void Update(GameTime gameTime, Player player)
+        {
+            if (_currentCooldown > 0)
+            {
+                _currentCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (_currentCooldown < 0)
+                    _currentCooldown = 0;
+            } else
+            {
+                AttackPlayer(player);
+            }
+        }
+
+        public void AttackPlayer(Player player)
+        {
+            if (!IsAlive || !CanAttack) return;
+
+            float distance = Vector2.Distance(Position, player.Position);
+            if (distance <= ATTACK_RANGE)
+            {
+                player.TakeDamage(1);
+                _currentCooldown = _attackCooldown;
+            }
+        }
+
         public void MoveTowards(Player player, GameTime gameTime)
         {
             if (!IsAlive)
                 return;
+            
+            Update(gameTime, player);
 
             Vector2 direction = player.Position - Position;
-            
-            if (direction.Length() < 0.01f)
+
+            if (direction.Length() < ATTACK_RANGE)
                 return;
 
             direction.Normalize();

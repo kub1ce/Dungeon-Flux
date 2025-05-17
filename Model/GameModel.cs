@@ -657,7 +657,15 @@ namespace DungeonFlux.Model
 
         private void UpdateEnemies(GameTime gameTime)
         {
-            return;
+            int playerCurrentRoomX = (int)Math.Round(_player.Position.X);
+            int playerCurrentRoomY = (int)Math.Round(_player.Position.Y);
+
+            Room playerCurrentRoom = Dungeon[playerCurrentRoomX, playerCurrentRoomY];
+
+            foreach (var enemy in playerCurrentRoom.Enemies)
+            {
+                enemy.MoveTowards(_player, gameTime);
+            }
         }
     }
 }

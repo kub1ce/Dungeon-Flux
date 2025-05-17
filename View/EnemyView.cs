@@ -50,9 +50,22 @@ namespace DungeonFlux.View
                 spriteBatch.Draw(_pixel, new Rectangle(hitbox.X, hitbox.Y, border, hitbox.Height), Color.Red); // left
                 spriteBatch.Draw(_pixel, new Rectangle(hitbox.X + hitbox.Width - border, hitbox.Y, border, hitbox.Height), Color.Red); // right
 
-                var text = $"{_model.Position.X:F2} {_model.Position.Y:F2}";
-                Vector2 textSize = _font.MeasureString(text);
-                spriteBatch.DrawString(_font, text, new Vector2((int)position.X - (textSize.X / 2), (int)position.Y - textSize.Y), Color.DarkRed);
+                var positionText = $"{_model.Position.X:F2} {_model.Position.Y:F2}";
+                var healthText = $"{_model.Health}";
+                Vector2 positionTextSize = _font.MeasureString(positionText);
+                Vector2 healthTextSize = _font.MeasureString(healthText);
+                
+                Vector2 positionTextPos = new Vector2(
+                    position.X - (positionTextSize.X / 2) + enemySize / 2,
+                    position.Y - positionTextSize.Y - 5 - healthTextSize.Y
+                ); 
+                spriteBatch.DrawString(_font, positionText, positionTextPos, Color.DarkRed);
+
+                Vector2 healthTextPos = new Vector2(
+                    position.X - (healthTextSize.X / 2) + enemySize / 2,
+                    position.Y - healthTextSize.Y
+                );
+                spriteBatch.DrawString(_font, healthText, healthTextPos, Color.DarkRed);
             }
         }
     }

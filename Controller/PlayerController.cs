@@ -30,8 +30,13 @@ namespace DungeonFlux.Controller
             if (!_game.IsActive)
                 return;
 
+            HandleMovement(gameTime);
+            HandleAttack();
+        }
+
+        private void HandleMovement(GameTime gameTime)
+        {
             var keyboardState = Keyboard.GetState();
-            var mouseState = Mouse.GetState();
             var direction = Vector2.Zero;
 
             if (keyboardState.IsKeyDown(Keys.W) || keyboardState.IsKeyDown(Keys.Up))
@@ -83,13 +88,18 @@ namespace DungeonFlux.Controller
                     _player.Move(finalDirection, gameTime);
                 }
             }
+        }
 
+        private void HandleAttack()
+        {
+            var mouseState = Mouse.GetState();
             if (mouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released)
             {
                 var viewport = _graphicsDevice.Viewport;
                 var mousePosition = new Vector2(mouseState.X, mouseState.Y);
 
-                Vector2 mouseWorld = (mousePosition - new Vector2(viewport.Width / 2, viewport.Height / 2)) / (_gameModel.Scale * GameSettings.Graphics.RoomSize) + _gameModel.CameraPosition;
+                Vector2 mouseWorld = (mousePosition - new Vector2(viewport.Width / 2, viewport.Height / 2)) / 
+                    (_gameModel.Scale * GameSettings.Graphics.RoomSize) + _gameModel.CameraPosition;
 
                 Vector2 weaponCenter = _player.Position + new Vector2(
                     GameSettings.Player.Size / (2f * GameSettings.Graphics.RoomSize),
@@ -102,7 +112,7 @@ namespace DungeonFlux.Controller
 
                 var attackDirection = mouseWorld - weaponCenter;
 
-                if (attackDirection != Vector2.Zero)
+                if (attackDirection != Vector2.Zero && _player.Weapon.CanAttack)
                 {
                     attackDirection.Normalize();
                     _player.Attack(attackDirection);
@@ -110,6 +120,50 @@ namespace DungeonFlux.Controller
             }
 
             _previousMouseState = mouseState;
+        }
+
+        private System.Collections.Generic.IEnumerable<Enemy> GetEnemiesInCurrentRoom()
+        {
+            int roomX = (int)Math.Round(_player.Position.X);
+            int roomY = (int)Math.Round(_player.Position.Y);
+            Logger.Log($"Room: {roomX}, {roomY}");
+            
+            var currentRoom = _gameModel.Dungeon[roomX, roomY];
+            if (currentRoom != null)
+            {
+                foreach (var enemy in currentRoom.Enemies)
+                {
+                    if (enemy.IsAlive)
+                    {
+                        yield return enemy;
+                    }
+                }
+            }
+        }
+
+        private bool LineIntersectsRect(Vector2 lineStart, Vector2 lineEnd, Vector2 rectMin, Vector2 rectMax)
+        {
+            // Check if line intersects with any of the rectangle's edges
+            return LineIntersectsLine(lineStart, lineEnd, rectMin, new Vector2(rectMax.X, rectMin.Y)) ||
+                   LineIntersectsLine(lineStart, lineEnd, new Vector2(rectMax.X, rectMin.Y), rectMax) ||
+                   LineIntersectsLine(lineStart, lineEnd, rectMax, new Vector2(rectMin.X, rectMax.Y)) ||
+                   LineIntersectsLine(lineStart, lineEnd, new Vector2(rectMin.X, rectMax.Y), rectMin);
+        }
+
+        private bool LineIntersectsLine(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, Vector2 line2End)
+        {
+            float denominator = ((line1End.X - line1Start.X) * (line2End.Y - line2Start.Y)) - 
+                               ((line1End.Y - line1Start.Y) * (line2End.X - line2Start.X));
+
+            if (denominator == 0)
+                return false;
+
+            float ua = (((line1End.X - line1Start.X) * (line1Start.Y - line2Start.Y)) - 
+                       ((line1End.Y - line1Start.Y) * (line1Start.X - line2Start.X))) / denominator;
+            float ub = (((line2End.X - line2Start.X) * (line1Start.Y - line2Start.Y)) - 
+                       ((line2End.Y - line2Start.Y) * (line1Start.X - line2Start.X))) / denominator;
+
+            return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
         }
     }
 }

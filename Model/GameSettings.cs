@@ -22,7 +22,7 @@ namespace DungeonFlux.Model
             public static class Default
             {
                 public const float Cooldown = 0.5f;  // 0.5 секунды между атаками
-                public const int Damage = 30;        // 10 единиц урона
+                public const int Damage = 10;        // 10 единиц урона
                 public const float Range = 480f;     // дальности атаки
             }
 

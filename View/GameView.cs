@@ -32,6 +32,7 @@ namespace DungeonFlux.View
         public Vector2 CameraPosition => _model.CameraPosition;
         public float Scale => _model.Scale;
         public Room PlayerRoom { get; private set; }
+        public Player Player => _player;
 
         public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player, Texture2D enemyTexture)
         {
@@ -278,6 +279,20 @@ namespace DungeonFlux.View
                 }
 
                 DrawDebugOverlay(screenWidth, screenHeight, scale, screenCenter);
+            }
+
+            for (int x = minX; x < maxX; x++)
+            {
+                for (int y = minY; y < maxY; y++)
+                {
+                    var room = _model.Dungeon[x, y];
+                    if (room == null) continue;
+                    foreach (var enemy in room.Enemies)
+                    {
+                        if (_enemyViews.ContainsKey(enemy))
+                            _enemyViews[enemy].DrawAttackEffect(_spriteBatch);
+                    }
+                }
             }
         }
 

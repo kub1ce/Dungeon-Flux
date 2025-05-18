@@ -35,6 +35,26 @@ namespace DungeonFlux.Model
             }
         }
 
+        // Enemy settings
+        public static class Enemy
+        {
+            public static class Movement
+            {
+                public const float MoveSpeed = 0.48f;
+                public const float AttackRange = 0.08f;
+                public const float AttackCooldown = 0.6f;
+                public const int DefaultHealth = 30;
+            }
+
+            public static class AttackEffect
+            {
+                public const float Duration = 0.3f; // Длительность эффекта в секундах
+                public const float Range = Movement.AttackRange; // Дистанция атаки
+                public static readonly Color Color = Color.DarkRed;
+                public const int Thickness = 8; // Толщина линии
+            }
+        }
+
         // Graphics settings
         public static class Graphics
         {

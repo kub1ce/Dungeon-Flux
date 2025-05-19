@@ -64,13 +64,6 @@ namespace DungeonFlux.Model
             InitializeWeapon();
         }
 
-        public Player(Vector2 position)
-        {
-            Position = position;
-            Health = GameSettings.Player.MaxHealth;
-            InitializeWeapon();
-        }
-
         public Player(Vector2 position, GameModel gameModel)
         {
             _gameModel = gameModel;
@@ -116,7 +109,14 @@ namespace DungeonFlux.Model
                 return false;
 
             _weapon.Direction = direction;
-            return _weapon.Attack();
+            foreach (var damage in _weapon.Attack())
+            {
+                if (damage)
+                {
+                    AddCoins(1);
+                }
+            }
+            return true;
         }
 
         public void TakeDamage(int amount)
@@ -145,6 +145,27 @@ namespace DungeonFlux.Model
             {
                 Health = Math.Max(0, Health + delta);
             }
+        }
+
+        public void AddCoins(int amount)
+        {
+            if (amount < 0)
+                throw new ArgumentException("Coins amount cannot be negative");
+
+            UpdateCoins(amount);
+        }
+
+        public void RemoveCoins(int amount)
+        {
+            if (amount < 0)
+                throw new ArgumentException("Coins amount cannot be negative");
+
+            UpdateCoins(-amount);
+        }
+
+        private void UpdateCoins(int delta)
+        {
+            Coins = MathHelper.Clamp(Coins + delta, 0, int.MaxValue);
         }
 
         public bool IsAlive()

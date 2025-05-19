@@ -78,10 +78,10 @@ namespace DungeonFlux.Model
             _attackEffect.Update(gameTime);
         }
 
-        public bool Attack(Vector2? attackDirection = null)
+        public IEnumerable<bool> Attack(Vector2? attackDirection = null)
         {
             if (!CanAttack)
-                return false;
+                yield return false;
 
             _currentCooldown = _cooldown;
             _attackEffect.Start(Position, Direction);
@@ -89,15 +89,17 @@ namespace DungeonFlux.Model
 
             Vector2 direction = attackDirection ?? _direction;
             if (direction == Vector2.Zero)
-                return false;
+                yield return false;
 
             var hitEnemies = GetHitEnemies(direction);
             foreach (var enemy in hitEnemies)
             {
                 enemy.TakeDamage(_damage);
+                if (!enemy.IsAlive)
+                    yield return true;
             }
 
-            return true;
+            yield return false;
         }
 
         private IEnumerable<Enemy> GetHitEnemies(Vector2 attackDirection)

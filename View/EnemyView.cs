@@ -78,6 +78,8 @@ namespace DungeonFlux.View
 
         public void DrawAttackEffect(SpriteBatch spriteBatch)
         {
+            if (!_model.IsAlive) return;
+            
             var attackEffect = _model.CurrentAttackEffect;
             if (attackEffect != null && attackEffect.IsActive)
             {

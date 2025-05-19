@@ -9,7 +9,7 @@ namespace DungeonFlux.Model
         public int Direction { get; private set; }
         public bool IsConnection { get; private set; }
         public bool IsDoor { get; private set; }
-        public bool IsOpen { get; private set; }
+        public bool IsOpen { get; set; }
 
         public Wall(Rectangle bounds, bool isCorridor, int direction, bool isConnection, bool isDoor = false)
         {
@@ -18,7 +18,7 @@ namespace DungeonFlux.Model
             Direction = direction;
             IsConnection = isConnection;
             IsDoor = isDoor;
-            IsOpen = false;
+            IsOpen = isDoor;
         }
 
         public bool Intersects(Rectangle other)

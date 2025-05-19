@@ -662,9 +662,42 @@ namespace DungeonFlux.Model
 
             Room playerCurrentRoom = Dungeon[playerCurrentRoomX, playerCurrentRoomY];
 
+            // Update door states based on enemies
+            UpdateDoorStates(playerCurrentRoom);
+
             foreach (var enemy in playerCurrentRoom.Enemies)
             {
                 enemy.MoveTowards(_player, gameTime);
+            }
+        }
+
+        private void UpdateDoorStates(Room currentRoom)
+        {
+            if (currentRoom == null) return;
+
+            bool hasAliveEnemies = currentRoom.Enemies.Any(e => e.IsAlive);
+
+            // Если в текущей комнате есть живые враги, закрываем все двери
+            if (hasAliveEnemies)
+            {
+                foreach (var wall in Walls)
+                {
+                    if (wall.IsDoor)
+                    {
+                        wall.IsOpen = false;
+                    }
+                }
+            }
+            else
+            {
+                // Если врагов нет, открываем все двери в подземелье
+                foreach (var wall in Walls)
+                {
+                    if (wall.IsDoor)
+                    {
+                        wall.IsOpen = true;
+                    }
+                }
             }
         }
     }

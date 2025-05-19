@@ -657,8 +657,8 @@ namespace DungeonFlux.Model
 
         private void UpdateEnemies(GameTime gameTime)
         {
-            int playerCurrentRoomX = (int)Math.Round(_player.Position.X);
-            int playerCurrentRoomY = (int)Math.Round(_player.Position.Y);
+            int playerCurrentRoomX = (int)Math.Round(_player.Position.X + (GameSettings.Player.Size / 2) / GameSettings.Graphics.RoomSize);
+            int playerCurrentRoomY = (int)Math.Round(_player.Position.Y + (GameSettings.Player.Size / 2) / GameSettings.Graphics.RoomSize);
 
             Room playerCurrentRoom = Dungeon[playerCurrentRoomX, playerCurrentRoomY];
 
@@ -676,10 +676,23 @@ namespace DungeonFlux.Model
             if (currentRoom == null) return;
 
             bool hasAliveEnemies = currentRoom.Enemies.Any(e => e.IsAlive);
+            bool isPlayerFullyInside = IsPlayerFullyInsideRoom(currentRoom);
 
-            // Если в текущей комнате есть живые враги, закрываем все двери
-            if (hasAliveEnemies)
+            // Если в текущей комнате есть живые враги и игрок полностью внутри, закрываем все двери
+            if (hasAliveEnemies && isPlayerFullyInside)
             {
+                foreach (var wall in Walls)
+                {
+                    if (wall.IsDoor)
+                    {
+                        wall.IsOpen = false;
+                    }
+                }
+            }
+            else if (hasAliveEnemies && !isPlayerFullyInside)
+            {
+                // Если есть враги и игрок не полностью внутри, выталкиваем его в комнату
+                PushPlayerIntoRoom(currentRoom);
                 foreach (var wall in Walls)
                 {
                     if (wall.IsDoor)
@@ -699,6 +712,77 @@ namespace DungeonFlux.Model
                     }
                 }
             }
+        }
+
+        private void PushPlayerIntoRoom(Room room)
+        {
+            try
+            {
+                if (room == null)
+                {
+                    Logger.LogError("PushPlayerIntoRoom: room is null");
+                    return;
+                }
+
+                if (_player == null)
+                {
+                    Logger.LogError("PushPlayerIntoRoom: player is null");
+                    return;
+                }
+
+
+                // Вычисляем вектор от игрока к центру комнаты
+                float dirX = room.Position.X - _player.Position.X;
+                float dirY = room.Position.Y - _player.Position.Y;
+
+                float length = (float)Math.Sqrt(dirX * dirX + dirY * dirY);
+                if (length < 0.001f)
+                {
+                    dirX = 1.0f;
+                    dirY = 0.0f;
+                    length = 1.0f;
+                }
+
+                dirX /= length;
+                dirY /= length;
+
+                // Определяем, по какой оси больше отклонение
+                float newX = _player.Position.X + GameSettings.Player.Size / 2 / GameSettings.Graphics.RoomSize;
+                float newY = _player.Position.Y + GameSettings.Player.Size / 2 / GameSettings.Graphics.RoomSize;
+                float pushDistance = GameSettings.Player.Size * 1.1f / GameSettings.Graphics.RoomSize;
+
+                if (Math.Abs(dirX) > Math.Abs(dirY))
+                {
+                    // Двигаемся по X
+                    newX += dirX * pushDistance;
+                }
+                else
+                {
+                    // Двигаемся по Y
+                    newY += dirY * pushDistance;
+                }
+                
+                _player.SetPosition(new Vector2(newX, newY));
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"PushPlayerIntoRoom error: {e.Message}\n{e.StackTrace}");
+            }
+        }
+
+        private bool IsPlayerFullyInsideRoom(Room room)
+        {
+            float roomX = room.Position.X * GameSettings.Graphics.RoomSize;
+            float roomY = room.Position.Y * GameSettings.Graphics.RoomSize;
+            float playerX = _player.Position.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float playerY = _player.Position.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+
+            // Проверяем, что игрок полностью находится внутри комнаты с небольшим отступом
+            float margin = GameSettings.Player.Size / 2;
+            return playerX - margin >= roomX &&
+                   playerX + margin <= roomX + GameSettings.Graphics.RoomSize &&
+                   playerY - margin >= roomY &&
+                   playerY + margin <= roomY + GameSettings.Graphics.RoomSize;
         }
     }
 }

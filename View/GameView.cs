@@ -221,6 +221,23 @@ namespace DungeonFlux.View
                 }
             }
 
+            for (int x = minX; x < maxX; x++)
+            {
+                for (int y = minY; y < maxY; y++)
+                {
+                    var room = _model.Dungeon[x, y];
+                    if (room == null) continue;
+                    foreach (var enemy in room.Enemies)
+                    {
+                        if (_enemyViews.ContainsKey(enemy))
+                            _enemyViews[enemy].DrawAttackEffect(_spriteBatch);
+                    }
+                }
+            }
+
+            // Draw UI
+            DrawUI(screenWidth, screenHeight);
+
             // Draw debug info for rooms
             if (GameSettings.Debug.IsDebugModeEnabled)
             {
@@ -258,19 +275,19 @@ namespace DungeonFlux.View
                             (int)(wall.Bounds.Width * scale),
                             (int)(wall.Bounds.Height * scale)
                         );
-                        
+
                         // Draw center line
                         if (scaledBounds.Width > scaledBounds.Height)
                         {
                             int centerY = scaledBounds.Y + scaledBounds.Height / 2;
-                            _spriteBatch.Draw(_wallTexture, 
+                            _spriteBatch.Draw(_wallTexture,
                                 new Rectangle(scaledBounds.X, centerY - 1, scaledBounds.Width, 2),
                                 wall.IsOpen ? Color.LimeGreen : Color.Red);
                         }
                         else
                         {
                             int centerX = scaledBounds.X + scaledBounds.Width / 2;
-                            _spriteBatch.Draw(_wallTexture, 
+                            _spriteBatch.Draw(_wallTexture,
                                 new Rectangle(centerX - 1, scaledBounds.Y, 2, scaledBounds.Height),
                                 wall.IsOpen ? Color.LimeGreen : Color.Red);
                         }
@@ -280,21 +297,50 @@ namespace DungeonFlux.View
 
                 DrawDebugOverlay(screenWidth, screenHeight, scale, screenCenter);
             }
-
-            for (int x = minX; x < maxX; x++)
-            {
-                for (int y = minY; y < maxY; y++)
-                {
-                    var room = _model.Dungeon[x, y];
-                    if (room == null) continue;
-                    foreach (var enemy in room.Enemies)
-                    {
-                        if (_enemyViews.ContainsKey(enemy))
-                            _enemyViews[enemy].DrawAttackEffect(_spriteBatch);
-                    }
-                }
-            }
         }
+
+        private void DrawUI(int screenWidth, int screenHeight)
+        {
+            var center = screenWidth / 2f;
+            string health = $"{_player.Health} <3";
+            string coins = $"{_player.Coins}$";
+            Vector2 stringHealthSize = _font.MeasureString(health);
+            Vector2 stringCoinsSize = _font.MeasureString(coins);
+
+            Rectangle bg = new Rectangle(
+                (int)(center - (Math.Max(stringHealthSize.X, stringCoinsSize.X) / 2f + 5f)),
+                (int)(screenHeight - (stringHealthSize.Y + stringCoinsSize.Y + 10f)),
+                (int)Math.Max(stringHealthSize.X, stringCoinsSize.X) + 5,
+                (int)(stringHealthSize.Y + stringCoinsSize.Y) + 10
+            );
+
+            _spriteBatch.Draw(
+                _wallTexture,
+                bg,
+                Color.Black*0.4f
+            );
+
+            // DrawRectangleBorder(bg, 12, Color.Gray);
+
+            _spriteBatch.DrawString(
+                _font,
+                coins,
+                new Vector2(
+                    center - (stringCoinsSize.X/2f),
+                    screenHeight - (stringHealthSize.Y + stringCoinsSize.Y + 10)),
+                Color.Gold
+            );
+
+            _spriteBatch.DrawString(
+                _font,
+                health,
+                new Vector2(
+                    center - (stringHealthSize.X/2f),
+                    screenHeight - (stringHealthSize.Y + 5)),
+                Color.OrangeRed
+            );
+        }
+
 
         private void DrawRoom(Room room, Vector2 position, float scale)
         {

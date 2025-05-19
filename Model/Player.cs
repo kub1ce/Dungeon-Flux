@@ -7,6 +7,7 @@ namespace DungeonFlux.Model
     {
         private Vector2 _position;
         private int _health;
+        private int _coins;
         private Weapon _weapon;
         private GameModel _gameModel;
 
@@ -37,10 +38,24 @@ namespace DungeonFlux.Model
             }
         }
 
+        public int Coins
+        {
+            get => _coins;
+            private set
+            {
+                if (_coins != value)
+                {
+                    _coins = value;
+                    CoinsChanged?.Invoke(_coins);
+                }
+            }
+        }
+
         public Weapon Weapon => _weapon;
 
         public event Action<Vector2> PositionChanged;
         public event Action<int> HealthChanged;
+        public event Action<int> CoinsChanged;
 
         public Player()
         {

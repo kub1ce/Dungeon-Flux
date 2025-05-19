@@ -764,12 +764,12 @@ namespace DungeonFlux.Model
                 dirY /= length;
 
                 // Определяем, по какой оси больше отклонение
-                float newX = _player.Position.X;
-                float newY = _player.Position.Y;
+                float newX = _player.Position.X + GameSettings.Player.Size / 2 / GameSettings.Graphics.RoomSize;
+                float newY = _player.Position.Y + GameSettings.Player.Size / 2 / GameSettings.Graphics.RoomSize;
                 
                 // Минимальное расстояние для выталкивания, чтобы игрок не застрял в двери
-                float minPushDistance = GameSettings.Player.Size * 0.2f / GameSettings.Graphics.RoomSize;
-                float pushDistance = Math.Max(GameSettings.Player.Size * 1.1f / GameSettings.Graphics.RoomSize, minPushDistance);
+                float minPushDistance = GameSettings.Player.Size * 0.8f / GameSettings.Graphics.RoomSize;
+                float pushDistance = Math.Max(GameSettings.Player.Size * 1.5f / GameSettings.Graphics.RoomSize, minPushDistance);
 
                 if (Math.Abs(dirX) > Math.Abs(dirY))
                 {
@@ -800,12 +800,18 @@ namespace DungeonFlux.Model
             float playerTop = _player.Position.Y * GameSettings.Graphics.RoomSize;
             float playerBottom = playerTop + GameSettings.Player.Size;
 
-            float margin = 2f;
+            if (GameSettings.Debug.IsDebugModeEnabled)
+            {
+                Logger.Log($"Player position: {playerLeft}, {playerRight}, {playerTop}, {playerBottom}");
+                Logger.Log($"Room position: {roomX}, {roomY}");
+            }
+
+            float margin = GameSettings.Player.Size * 0.2f;
             
-            return playerLeft + margin >= roomX &&
-                   playerRight - margin <= roomX + GameSettings.Graphics.RoomSize &&
-                   playerTop + margin >= roomY &&
-                   playerBottom - margin <= roomY + GameSettings.Graphics.RoomSize;
+            return playerLeft - margin >= roomX &&
+                   playerRight + margin <= roomX + GameSettings.Graphics.RoomSize &&
+                   playerTop - margin >= roomY &&
+                   playerBottom + margin <= roomY + GameSettings.Graphics.RoomSize;
         }
     }
 }

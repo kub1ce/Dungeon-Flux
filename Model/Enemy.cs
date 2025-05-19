@@ -12,6 +12,8 @@ namespace DungeonFlux.Model
         private float _moveSpeed = GameSettings.Enemy.Movement.MoveSpeed;
         private float _attackCooldown = GameSettings.Enemy.Movement.AttackCooldown;
         private float _currentCooldown = 0f;
+        private const float STUCK_THRESHOLD = 0.5f; // Time in seconds before trying to escape stuck
+        private Random _random = new Random();
 
         private EnemyAttackEffect _attackEffect;
         public bool CanAttack => _currentCooldown <= 0;
@@ -85,22 +87,77 @@ namespace DungeonFlux.Model
             // Check collision with other enemies in the same room
             if (Room != null)
             {
+                bool isBlocked = false;
+                Vector2 alternativeDirection = Vector2.Zero;
+
                 foreach (var otherEnemy in Room.Enemies)
                 {
                     if (otherEnemy != this && otherEnemy.IsAlive && WouldCollideWithEnemy(newPosition, otherEnemy))
                     {
-                        return;
+                        isBlocked = true;
+                        
+                        Vector2 toOther = otherEnemy.Position - Position;
+                        alternativeDirection = new Vector2(-toOther.Y, toOther.X);
+                        alternativeDirection.Normalize();
+                        break;
                     }
                 }
-            }
 
-            Position = newPosition;
+                if (isBlocked)
+                {
+                    // Try to move in the alternative direction
+                    var alternativePosition = Position + alternativeDirection * _moveSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    
+                    bool alternativeValid = true;
+                    foreach (var otherEnemy in Room.Enemies)
+                    {
+                        if (otherEnemy != this && otherEnemy.IsAlive && WouldCollideWithEnemy(alternativePosition, otherEnemy))
+                        {
+                            alternativeValid = false;
+                            break;
+                        }
+                    }
+
+                    if (alternativeValid)
+                    {
+                        Position = alternativePosition;
+                    }
+                    else
+                    {
+                        var partialDelta = delta * 0.5f;
+                        var partialPosition = Position + partialDelta;
+                        
+                        bool partialValid = true;
+                        foreach (var otherEnemy in Room.Enemies)
+                        {
+                            if (otherEnemy != this && otherEnemy.IsAlive && WouldCollideWithEnemy(partialPosition, otherEnemy))
+                            {
+                                partialValid = false;
+                                break;
+                            }
+                        }
+
+                        if (partialValid)
+                        {
+                            Position = partialPosition;
+                        }
+                    }
+                }
+                else
+                {
+                    Position = newPosition;
+                }
+            }
+            else
+            {
+                Position = newPosition;
+            }
         }
 
         private bool WouldCollideWithEnemy(Vector2 newPosition, Enemy otherEnemy)
         {
             float enemySize = GameSettings.Player.Size / (float)GameSettings.Graphics.RoomSize;
-            float minDistance = enemySize * 0.8f;
+            float minDistance = enemySize * 0.6f;
 
             return Vector2.Distance(newPosition, otherEnemy.Position) < minDistance;
         }

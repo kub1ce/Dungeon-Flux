@@ -49,8 +49,8 @@ namespace DungeonFlux.Model
             public static class Spawn
             {
                 public const int MinEnemiesPerRoom = 1;
-                public const int MaxEnemiesPerRoom = 3;
-                public const float SpawnRadiusRatio = 0.4f; // в%, относительно центра комната (не может быть больше 0.5)
+                public const int MaxEnemiesPerRoom = 7;
+                public const float SpawnRadiusRatio = 0.35f; // в %, относительно центра комната (не может быть больше 0.5)
             }
 
             public static class AttackEffect

@@ -46,6 +46,13 @@ namespace DungeonFlux.Model
                 public const int DefaultHealth = 30;
             }
 
+            public static class Spawn
+            {
+                public const int MinEnemiesPerRoom = 1;
+                public const int MaxEnemiesPerRoom = 3;
+                public const float SpawnRadiusRatio = 0.4f; // в%, относительно центра комната (не может быть больше 0.5)
+            }
+
             public static class AttackEffect
             {
                 public const float Duration = 0.3f; // Длительность эффекта в секундах

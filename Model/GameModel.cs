@@ -20,18 +20,21 @@ namespace DungeonFlux.Model
 
         public Vector2 CameraPosition => _cameraPosition;
         public float Scale => _scale;
+        private readonly Random _random;
+        private Room _previousPlayerRoom;
 
         public GameModel()
         {
             _dungeonGenerator = new DungeonGenerator(
-                GameSettings.Dungeon.Size.Width, 
-                GameSettings.Dungeon.Size.Height, 
-                GameSettings.Dungeon.RoomCount.Min, 
+                GameSettings.Dungeon.Size.Width,
+                GameSettings.Dungeon.Size.Height,
+                GameSettings.Dungeon.RoomCount.Min,
                 GameSettings.Dungeon.RoomCount.Max
             );
             Walls = new List<Wall>();
             _cameraPosition = Vector2.Zero;
             _scale = GameSettings.Graphics.Scale;
+            _random = new Random();
             GenerateNewDungeon();
         }
 
@@ -67,9 +70,21 @@ namespace DungeonFlux.Model
                     var room = Dungeon[x, y];
                     if (room != null && room.Type != RoomType.Corridor && room.Type != RoomType.Start && room.Type != RoomType.Exit)
                     {
-                        var enemy = new Enemy(new Vector2(x, y));
-                        enemy.Room = room;
-                        room.Enemies.Add(enemy);
+                        int enemyCount = _random.Next(GameSettings.Enemy.Spawn.MinEnemiesPerRoom, GameSettings.Enemy.Spawn.MaxEnemiesPerRoom + 1);
+                        
+                        for (int i = 0; i < enemyCount; i++)
+                        {
+                            Vector2 roomCenter = new Vector2(x, y);
+                            float randomOffsetX = (float)(_random.NextDouble() * 2 - 1);
+                            float randomOffsetY = (float)(_random.NextDouble() * 2 - 1);
+                            
+                            float randomX = roomCenter.X + Math.Clamp(randomOffsetX, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
+                            float randomY = roomCenter.Y + Math.Clamp(randomOffsetY, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
+                            
+                            var enemy = new Enemy(new Vector2(randomX, randomY));
+                            enemy.Room = room;
+                            room.Enemies.Add(enemy);
+                        }
                     }
                 }
             }
@@ -677,6 +692,7 @@ namespace DungeonFlux.Model
 
             bool hasAliveEnemies = currentRoom.Enemies.Any(e => e.IsAlive);
             bool isPlayerFullyInside = IsPlayerFullyInsideRoom(currentRoom);
+            bool hasChangedRoom = _previousPlayerRoom != currentRoom;
 
             // Если в текущей комнате есть живые враги и игрок полностью внутри, закрываем все двери
             if (hasAliveEnemies && isPlayerFullyInside)
@@ -689,9 +705,9 @@ namespace DungeonFlux.Model
                     }
                 }
             }
-            else if (hasAliveEnemies && !isPlayerFullyInside)
+            else if (hasAliveEnemies && !isPlayerFullyInside && hasChangedRoom)
             {
-                // Если есть враги и игрок не полностью внутри, выталкиваем его в комнату
+                // Если есть враги, игрок не полностью внутри и сменил комнату, выталкиваем его в комнату
                 PushPlayerIntoRoom(currentRoom);
                 foreach (var wall in Walls)
                 {
@@ -712,6 +728,8 @@ namespace DungeonFlux.Model
                     }
                 }
             }
+
+            _previousPlayerRoom = currentRoom;
         }
 
         private void PushPlayerIntoRoom(Room room)
@@ -730,7 +748,6 @@ namespace DungeonFlux.Model
                     return;
                 }
 
-
                 // Вычисляем вектор от игрока к центру комнаты
                 float dirX = room.Position.X - _player.Position.X;
                 float dirY = room.Position.Y - _player.Position.Y;
@@ -747,9 +764,12 @@ namespace DungeonFlux.Model
                 dirY /= length;
 
                 // Определяем, по какой оси больше отклонение
-                float newX = _player.Position.X + GameSettings.Player.Size / 2 / GameSettings.Graphics.RoomSize;
-                float newY = _player.Position.Y + GameSettings.Player.Size / 2 / GameSettings.Graphics.RoomSize;
-                float pushDistance = GameSettings.Player.Size * 1.1f / GameSettings.Graphics.RoomSize;
+                float newX = _player.Position.X;
+                float newY = _player.Position.Y;
+                
+                // Минимальное расстояние для выталкивания, чтобы игрок не застрял в двери
+                float minPushDistance = GameSettings.Player.Size * 0.2f / GameSettings.Graphics.RoomSize;
+                float pushDistance = Math.Max(GameSettings.Player.Size * 1.1f / GameSettings.Graphics.RoomSize, minPushDistance);
 
                 if (Math.Abs(dirX) > Math.Abs(dirY))
                 {
@@ -772,17 +792,20 @@ namespace DungeonFlux.Model
 
         private bool IsPlayerFullyInsideRoom(Room room)
         {
-            float roomX = room.Position.X * GameSettings.Graphics.RoomSize;
-            float roomY = room.Position.Y * GameSettings.Graphics.RoomSize;
-            float playerX = _player.Position.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
-            float playerY = _player.Position.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2;
+            float roomX = (room.Position.X - 0.5f) * GameSettings.Graphics.RoomSize;
+            float roomY = (room.Position.Y - 0.5f) * GameSettings.Graphics.RoomSize;
 
-            // Проверяем, что игрок полностью находится внутри комнаты с небольшим отступом
-            float margin = GameSettings.Player.Size / 2;
-            return playerX - margin >= roomX &&
-                   playerX + margin <= roomX + GameSettings.Graphics.RoomSize &&
-                   playerY - margin >= roomY &&
-                   playerY + margin <= roomY + GameSettings.Graphics.RoomSize;
+            float playerLeft = _player.Position.X * GameSettings.Graphics.RoomSize;
+            float playerRight = playerLeft + GameSettings.Player.Size;
+            float playerTop = _player.Position.Y * GameSettings.Graphics.RoomSize;
+            float playerBottom = playerTop + GameSettings.Player.Size;
+
+            float margin = 2f;
+            
+            return playerLeft + margin >= roomX &&
+                   playerRight - margin <= roomX + GameSettings.Graphics.RoomSize &&
+                   playerTop + margin >= roomY &&
+                   playerBottom - margin <= roomY + GameSettings.Graphics.RoomSize;
         }
     }
 }

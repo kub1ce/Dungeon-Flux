@@ -80,7 +80,29 @@ namespace DungeonFlux.Model
             direction.Normalize();
 
             var delta = direction * _moveSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            Position += delta;
+            var newPosition = Position + delta;
+
+            // Check collision with other enemies in the same room
+            if (Room != null)
+            {
+                foreach (var otherEnemy in Room.Enemies)
+                {
+                    if (otherEnemy != this && otherEnemy.IsAlive && WouldCollideWithEnemy(newPosition, otherEnemy))
+                    {
+                        return;
+                    }
+                }
+            }
+
+            Position = newPosition;
+        }
+
+        private bool WouldCollideWithEnemy(Vector2 newPosition, Enemy otherEnemy)
+        {
+            float enemySize = GameSettings.Player.Size / (float)GameSettings.Graphics.RoomSize;
+            float minDistance = enemySize * 0.8f;
+
+            return Vector2.Distance(newPosition, otherEnemy.Position) < minDistance;
         }
     }
 } 

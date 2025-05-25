@@ -81,9 +81,25 @@ namespace DungeonFlux.Model
                             float randomX = roomCenter.X + Math.Clamp(randomOffsetX, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
                             float randomY = roomCenter.Y + Math.Clamp(randomOffsetY, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
                             
-                            var enemy = new Enemy(new Vector2(randomX, randomY));
-                            enemy.Room = room;
-                            room.Enemies.Add(enemy);
+                            // Check if there's already an enemy at this position
+                            bool positionOccupied = false;
+                            foreach (var existingEnemy in room.Enemies)
+                            {
+                                float enemySize = GameSettings.Player.Size / (float)GameSettings.Graphics.RoomSize;
+                                float minDistance = enemySize * 0.6f;
+                                if (Vector2.Distance(new Vector2(randomX, randomY), existingEnemy.Position) < minDistance)
+                                {
+                                    positionOccupied = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!positionOccupied)
+                            {
+                                var enemy = new Enemy(new Vector2(randomX, randomY));
+                                enemy.Room = room;
+                                room.Enemies.Add(enemy);
+                            }
                         }
                     }
                 }
@@ -667,7 +683,17 @@ namespace DungeonFlux.Model
 
         public void Update(GameTime gameTime)
         {
-            UpdateEnemies(gameTime);
+            try
+            {
+                UpdateEnemies(gameTime);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Critical error in GameModel.Update: {ex.Message}");
+                Logger.LogError($"Stack trace: {ex.StackTrace}");
+                Logger.LogError($"Inner exception: {ex.InnerException?.Message}");
+                Logger.LogError($"Inner stack trace: {ex.InnerException?.StackTrace}");
+            }
         }
 
         private void UpdateEnemies(GameTime gameTime)
@@ -799,12 +825,6 @@ namespace DungeonFlux.Model
             float playerRight = playerLeft + GameSettings.Player.Size;
             float playerTop = _player.Position.Y * GameSettings.Graphics.RoomSize;
             float playerBottom = playerTop + GameSettings.Player.Size;
-
-            if (GameSettings.Debug.IsDebugModeEnabled)
-            {
-                Logger.Log($"Player position: {playerLeft}, {playerRight}, {playerTop}, {playerBottom}");
-                Logger.Log($"Room position: {roomX}, {roomY}");
-            }
 
             float margin = GameSettings.Player.Size * 0.2f;
             

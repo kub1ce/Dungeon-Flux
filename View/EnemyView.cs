@@ -59,20 +59,28 @@ namespace DungeonFlux.View
 
                 var positionText = $"{_model.Position.X:F2} {_model.Position.Y:F2}";
                 var healthText = $"{_model.Health}";
-                Vector2 positionTextSize = _font.MeasureString(positionText);
-                Vector2 healthTextSize = _font.MeasureString(healthText);
+                try {
+                    Vector2 positionTextSize = _font.MeasureString(positionText);
+                    Vector2 healthTextSize = _font.MeasureString(healthText);
                 
-                Vector2 positionTextPos = new Vector2(
-                    position.X - (positionTextSize.X / 2) + enemySize / 2,
-                    position.Y - positionTextSize.Y - 5 - healthTextSize.Y
-                ); 
-                spriteBatch.DrawString(_font, positionText, positionTextPos, Color.DarkRed);
+                    Vector2 positionTextPos = new Vector2(
+                        position.X - (positionTextSize.X / 2) + enemySize / 2,
+                        position.Y - positionTextSize.Y - 5 - healthTextSize.Y
+                    ); 
+                    spriteBatch.DrawString(_font, positionText, positionTextPos, Color.DarkRed);
 
-                Vector2 healthTextPos = new Vector2(
-                    position.X - (healthTextSize.X / 2) + enemySize / 2,
-                    position.Y - healthTextSize.Y
-                );
-                spriteBatch.DrawString(_font, healthText, healthTextPos, Color.DarkRed);
+                    Vector2 healthTextPos = new Vector2(
+                        position.X - (healthTextSize.X / 2) + enemySize / 2,
+                        position.Y - healthTextSize.Y
+                    );
+                    spriteBatch.DrawString(_font, healthText, healthTextPos, Color.DarkRed);
+                } 
+                catch (Exception ex)
+                {
+                    Logger.LogWarning($"Error drawing enemy text:\n{_model.Position.X}\n{_model.Position.Y}");
+                    Logger.LogError($"Error drawing enemy text: {ex.Message}");
+                    Logger.LogError($"Stack trace: {ex.StackTrace}");
+                }
             }
         }
 

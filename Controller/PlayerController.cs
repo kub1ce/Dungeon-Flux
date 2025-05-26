@@ -32,6 +32,7 @@ namespace DungeonFlux.Controller
 
             HandleMovement(gameTime);
             HandleAttack();
+            HandleLevelTransition();
         }
 
         private void HandleMovement(GameTime gameTime)
@@ -120,6 +121,36 @@ namespace DungeonFlux.Controller
             }
 
             _previousMouseState = mouseState;
+        }
+
+        private void HandleLevelTransition()
+        {
+            var keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(Keys.E))
+            {
+                int playerRoomX = (int)Math.Round(_player.Position.X);
+                int playerRoomY = (int)Math.Round(_player.Position.Y);
+                var currentRoom = _gameModel.Dungeon[playerRoomX, playerRoomY];
+
+                if (currentRoom != null && currentRoom.Type == RoomType.Exit && !currentRoom.Enemies.Any(e => e.IsAlive))
+                {
+                    int currentHealth = _player.Health;
+                    int currentCoins = _player.Coins;
+
+                    _gameModel.GenerateNewDungeon();
+
+                    _player.SetPosition(_gameModel.PlayerPosition);
+
+                    if (currentHealth < GameSettings.Player.MaxHealth)
+                    {
+                        _player.TakeDamage(GameSettings.Player.MaxHealth - currentHealth);
+                    }
+                    if (currentCoins > 0)
+                    {
+                        _player.AddCoins(currentCoins);
+                    }
+                }
+            }
         }
 
         private System.Collections.Generic.IEnumerable<Enemy> GetEnemiesInCurrentRoom()

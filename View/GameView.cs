@@ -29,6 +29,8 @@ namespace DungeonFlux.View
         private Texture2D _coinTexture;
         private Texture2D _aidTexture;
         private Dictionary<Enemy, EnemyView> _enemyViews = new();
+        private GameOverView _gameOverView;
+        private bool _isGameOver;
 
         public SpriteBatch SpriteBatch => _spriteBatch;
         public Vector2 CameraPosition => _model.CameraPosition;
@@ -36,7 +38,7 @@ namespace DungeonFlux.View
         public Room PlayerRoom { get; private set; }
         public Player Player => _player;
 
-        public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player, Texture2D enemyTexture, Texture2D coinTexture, Texture2D aidTexture)
+        public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player, Texture2D enemyTexture, Texture2D coinTexture, Texture2D aidTexture, Game game)
         {
             _model = model;
             _spriteBatch = spriteBatch;
@@ -53,6 +55,7 @@ namespace DungeonFlux.View
             _enemyTexture = enemyTexture;
             _coinTexture = coinTexture;
             _aidTexture = aidTexture;
+            _gameOverView = new GameOverView(spriteBatch, font, game);
         }
 
         private void CalculateDungeonOffset()
@@ -136,11 +139,34 @@ namespace DungeonFlux.View
             return (left, top, boxWidthWorld, boxHeightWorld);
         }
 
+        public void Update()
+        {
+            if (!_isGameOver && !_player.IsAlive())
+            {
+                _isGameOver = true;
+            }
+
+            if (_isGameOver)
+            {
+                _gameOverView.Update(_player.Coins);
+            }
+        }
+
         public void Draw(GameTime gameTime)
         {
             if (_model.Dungeon == null || _font == null)
                 return;
 
+            DrawGame(gameTime);
+
+            if (_isGameOver)
+            {
+                _gameOverView.Draw();
+            }
+        }
+
+        private void DrawGame(GameTime gameTime)
+        {
             _walls.Clear();
 
             int screenWidth = _spriteBatch.GraphicsDevice.Viewport.Width;
@@ -335,8 +361,6 @@ namespace DungeonFlux.View
                 Color.Black*0.4f
             );
 
-            // DrawRectangleBorder(bg, 12, Color.Gray);
-
             _spriteBatch.DrawString(
                 _font,
                 coins,
@@ -354,8 +378,44 @@ namespace DungeonFlux.View
                     screenHeight - (stringHealthSize.Y + 5)),
                 Color.OrangeRed
             );
+
+            DrawLevelTransitionHint(screenWidth, screenHeight);
         }
 
+        private void DrawLevelTransitionHint(int screenWidth, int screenHeight)
+        {
+            int playerRoomX = (int)Math.Round(_player.Position.X);
+            int playerRoomY = (int)Math.Round(_player.Position.Y);
+            var currentRoom = _model.Dungeon[playerRoomX, playerRoomY];
+
+            if (currentRoom != null && currentRoom.Type == RoomType.Exit && !currentRoom.Enemies.Any(e => e.IsAlive))
+            {
+                string hint = "Press E to proceed to next level";
+                Vector2 hintSize = _font.MeasureString(hint);
+                
+                Rectangle hintBg = new Rectangle(
+                    (int)(screenWidth / 2f - hintSize.X / 2f - 5f),
+                    (int)(screenHeight / 3f - hintSize.Y / 2f - 5f),
+                    (int)hintSize.X + 10,
+                    (int)hintSize.Y + 10
+                );
+
+                _spriteBatch.Draw(
+                    _wallTexture,
+                    hintBg,
+                    Color.Black * 0.7f
+                );
+
+                _spriteBatch.DrawString(
+                    _font,
+                    hint,
+                    new Vector2(
+                        screenWidth / 2f - hintSize.X / 2f,
+                        screenHeight / 3f - hintSize.Y / 2f),
+                    Color.Gold
+                );
+            }
+        }
 
         private void DrawRoom(Room room, Vector2 position, float scale)
         {

@@ -94,9 +94,20 @@ public class DungeonFluxGame : Game
         _enemyTexture = Content.Load<Texture2D>("Timarokk");
         _coinTexture = Content.Load<Texture2D>("coin");
         _aidTexture = Content.Load<Texture2D>("aid");
-        _view = new GameView(_model, _spriteBatch, _menuFont, _playerModel, _enemyTexture, _coinTexture, _aidTexture);
+        _view = new GameView(_model, _spriteBatch, _menuFont, _playerModel, _enemyTexture, _coinTexture, _aidTexture, this);
         _playerView = new PlayerView(_playerModel, _playerTexture, _view, Content);
         Logger.Log("Game initialized successfully");
+    }
+
+    public void ReturnToMenu()
+    {
+        _isInMenu = true;
+        _model = null;
+        _view = null;
+        _controller = null;
+        _playerModel = null;
+        _playerController = null;
+        _playerView = null;
     }
 
     protected override void Update(GameTime gameTime)
@@ -125,7 +136,7 @@ public class DungeonFluxGame : Game
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
                     keyboardState.IsKeyDown(Keys.Escape))
                 {
-                    _isInMenu = true;
+                    ReturnToMenu();
                     return;
                 }
 
@@ -135,15 +146,24 @@ public class DungeonFluxGame : Game
                     GameSettings.Debug.IsDebugModeEnabled = !GameSettings.Debug.IsDebugModeEnabled;
                 }
 
-                _controller.Update();
-                _playerModel.Update(gameTime);
-                _playerController.Update(gameTime);
-                _model.Update(gameTime);
-                _view.UpdateCamera(_playerModel.Position);
+                if (_playerModel != null && _playerModel.IsAlive())
+                {
+                    _controller.Update();
+                    _playerModel.Update(gameTime);
+                    _playerController.Update(gameTime);
+                    _model.Update(gameTime);
+                    _view.UpdateCamera(_playerModel.Position);
+                }
+
+                if (_view != null)
+                {
+                    _view.Update();
+                }
             }
 
             _previousKeyboardState = keyboardState;
             _previousMouseState = mouseState;
+
             base.Update(gameTime);
         }
         catch
@@ -167,7 +187,10 @@ public class DungeonFluxGame : Game
             else
             {
                 _view.Draw(gameTime);
-                _playerView.Draw(_spriteBatch);
+                if (_playerModel != null && _playerModel.IsAlive())
+                {
+                    _playerView.Draw(_spriteBatch);
+                }
             }
             
             _spriteBatch.End();

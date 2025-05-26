@@ -68,7 +68,7 @@ namespace DungeonFlux.Model
                 for (int y = 0; y < Dungeon.GetLength(1); y++)
                 {
                     var room = Dungeon[x, y];
-                    if (room != null && room.Type != RoomType.Corridor && room.Type != RoomType.Start && room.Type != RoomType.Exit)
+                    if (room != null && room.Type == RoomType.DeadEnd && room.SubType == RoomSubType.Enemy)
                     {
                         int enemyCount = _random.Next(GameSettings.Enemy.Spawn.MinEnemiesPerRoom, GameSettings.Enemy.Spawn.MaxEnemiesPerRoom + 1);
                         
@@ -81,7 +81,6 @@ namespace DungeonFlux.Model
                             float randomX = roomCenter.X + Math.Clamp(randomOffsetX, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
                             float randomY = roomCenter.Y + Math.Clamp(randomOffsetY, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
                             
-                            // Check if there's already an enemy at this position
                             bool positionOccupied = false;
                             foreach (var existingEnemy in room.Enemies)
                             {
@@ -100,6 +99,27 @@ namespace DungeonFlux.Model
                                 enemy.Room = room;
                                 room.Enemies.Add(enemy);
                             }
+                        }
+                    }
+                    else if (room != null && room.Type == RoomType.DeadEnd && room.SubType == RoomSubType.Treasure)
+                    {
+                        // Spawn items in treasure rooms
+                        int itemCount = _random.Next(3, 6);
+                        for (int i = 0; i < itemCount; i++)
+                        {
+                            Vector2 roomCenter = new Vector2(x, y);
+                            float randomOffsetX = (float)(_random.NextDouble() * 2 - 1) * 0.3f;
+                            float randomOffsetY = (float)(_random.NextDouble() * 2 - 1) * 0.3f;
+                            
+                            float randomX = roomCenter.X + randomOffsetX;
+                            float randomY = roomCenter.Y + randomOffsetY;
+                            
+                            Item item = _random.NextDouble() < 0.9f ? 
+                                new Coin(new Vector2(randomX, randomY)) : 
+                                new HealthPotion(new Vector2(randomX, randomY));
+                            
+                            item.Room = room;
+                            room.Items.Add(item);
                         }
                     }
                 }
@@ -686,6 +706,7 @@ namespace DungeonFlux.Model
             try
             {
                 UpdateEnemies(gameTime);
+                UpdateItems();
             }
             catch (Exception ex)
             {
@@ -832,6 +853,37 @@ namespace DungeonFlux.Model
                    playerRight + margin <= roomX + GameSettings.Graphics.RoomSize &&
                    playerTop - margin >= roomY &&
                    playerBottom + margin <= roomY + GameSettings.Graphics.RoomSize;
+        }
+
+        private void UpdateItems()
+        {
+            if (_player == null) return;
+
+            int playerRoomX = (int)Math.Round(_player.Position.X);
+            int playerRoomY = (int)Math.Round(_player.Position.Y);
+            
+            var currentRoom = Dungeon[playerRoomX, playerRoomY];
+            if (currentRoom == null) return;
+
+            float playerX = _player.Position.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2f;
+            float playerY = _player.Position.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2f;
+            int playerSize = GameSettings.Player.Size;
+            Rectangle playerBounds = new Rectangle(
+                (int)(playerX),
+                (int)(playerY),
+                playerSize,
+                playerSize
+            );
+
+            for (int i = currentRoom.Items.Count - 1; i >= 0; i--)
+            {
+                var item = currentRoom.Items[i];
+                if (!item.IsCollected && item.Bounds.Intersects(playerBounds))
+                {
+                    item.Collect(_player);
+                    currentRoom.Items.RemoveAt(i);
+                }
+            }
         }
     }
 }

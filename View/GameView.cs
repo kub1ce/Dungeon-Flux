@@ -26,6 +26,8 @@ namespace DungeonFlux.View
         private Vector2 _dungeonOffset;
         private List<WallInfo> _walls = new List<WallInfo>();
         private Texture2D _enemyTexture;
+        private Texture2D _coinTexture;
+        private Texture2D _aidTexture;
         private Dictionary<Enemy, EnemyView> _enemyViews = new();
 
         public SpriteBatch SpriteBatch => _spriteBatch;
@@ -34,7 +36,7 @@ namespace DungeonFlux.View
         public Room PlayerRoom { get; private set; }
         public Player Player => _player;
 
-        public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player, Texture2D enemyTexture)
+        public GameView(GameModel model, SpriteBatch spriteBatch, SpriteFont font, Player player, Texture2D enemyTexture, Texture2D coinTexture, Texture2D aidTexture)
         {
             _model = model;
             _spriteBatch = spriteBatch;
@@ -49,6 +51,8 @@ namespace DungeonFlux.View
 
             CalculateDungeonOffset();
             _enemyTexture = enemyTexture;
+            _coinTexture = coinTexture;
+            _aidTexture = aidTexture;
         }
 
         private void CalculateDungeonOffset()
@@ -177,6 +181,17 @@ namespace DungeonFlux.View
 
                     DrawRoom(room, position, scale);
                     DrawWalls(room, position, scale);
+                }
+            }
+
+            // Draw items
+            for (int x = minX; x < maxX; x++)
+            {
+                for (int y = minY; y < maxY; y++)
+                {
+                    var room = _model.Dungeon[x, y];
+                    if (room == null) continue;
+                    DrawItems(room, scale, cameraOffset);
                 }
             }
 
@@ -350,7 +365,7 @@ namespace DungeonFlux.View
             }
             else
             {
-                Color roomColor = GetRoomColor(room.Type);
+                Color roomColor = GetRoomColor(room.Type, room.SubType);
                 _spriteBatch.Draw(_roomTexture, 
                     new Rectangle(
                         (int)position.X, 
@@ -371,6 +386,10 @@ namespace DungeonFlux.View
             bool isPlayerRoom = (roomX == playerRoomX && roomY == playerRoomY);
 
             string roomTypeText = room.Type.ToString();
+            if (room.Type == RoomType.DeadEnd)
+            {
+                roomTypeText += $" ({room.SubType})";
+            }
             Vector2 textSize = _font.MeasureString(roomTypeText);
             Vector2 textPos = position + new Vector2(
                 (GameSettings.Graphics.RoomSize * scale - textSize.X) / 2,
@@ -453,6 +472,10 @@ namespace DungeonFlux.View
                 {
                     var currentRoom = _model.Dungeon[playerRoomX, playerRoomY];
                     string roomType = currentRoom?.Type.ToString() ?? "null";
+                    if (roomType == "DeadEnd")
+                    {
+                        roomType += $" ({currentRoom?.SubType})";
+                    }
                     string debugInfo =
                         $"Current Room Type: {roomType}\n" +
                         $"XY: {_player.Position.X:F2} {_player.Position.Y:F2}\n" +
@@ -520,17 +543,32 @@ namespace DungeonFlux.View
                 color);
         }
 
-        private Color GetRoomColor(RoomType type)
+        private Color GetRoomColor(RoomType type, RoomSubType subType = RoomSubType.Empty)
         {
-            return type switch
+            Color baseColor = GameSettings.Graphics.RoomColors.Default;
+
+            if (type == RoomType.Start)
+                return GameSettings.Graphics.RoomColors.StartRoom;
+            if (type == RoomType.Exit)
+                return GameSettings.Graphics.RoomColors.ExitRoom;
+            if (type == RoomType.Corridor)
+                return GameSettings.Graphics.RoomColors.Corridor;
+
+            if (type == RoomType.DeadEnd && GameSettings.Debug.IsDebugModeEnabled && subType != RoomSubType.Empty)
             {
-                RoomType.Start => GameSettings.Graphics.RoomColors.StartRoom,
-                RoomType.Exit => GameSettings.Graphics.RoomColors.ExitRoom,
-                RoomType.Boss => GameSettings.Graphics.RoomColors.BossRoom,
-                RoomType.Corridor => GameSettings.Graphics.RoomColors.Corridor,
-                RoomType.DeadEnd => GameSettings.Graphics.RoomColors.DeadEnd,
-                _ => GameSettings.Graphics.RoomColors.Default
-            };
+                Color subtypeColor = subType switch
+                {
+                    RoomSubType.Enemy => Color.Red,
+                    RoomSubType.Treasure => Color.Gold,
+                    RoomSubType.Shop => Color.Blue,
+                    RoomSubType.Boss => Color.Purple,
+                    _ => Color.Transparent
+                };
+
+                return Color.Lerp(baseColor, subtypeColor, 0.2f);
+            }
+
+            return baseColor;
         }
 
         private void DrawWalls(Room room, Vector2 position, float scale)
@@ -816,6 +854,38 @@ namespace DungeonFlux.View
                     new Rectangle((int)position.X + borderThickness, (int)position.Y + centerOffset + corridorWidth - borderThickness,
                         centerOffset - borderThickness, borderThickness),
                     GameSettings.Debug.CorridorBorder.Color);
+            }
+        }
+
+        private void DrawItems(Room room, float scale, Vector2 cameraOffset)
+        {
+            foreach (var item in room.Items)
+            {
+                if (item.IsCollected) continue;
+                Texture2D texture = null;
+                if (item is Coin) texture = _coinTexture;
+                else if (item is HealthPotion) texture = _aidTexture;
+                if (texture == null) continue;
+
+                Rectangle bounds = item.Bounds;
+                Rectangle drawRect = new Rectangle(
+                    (int)(bounds.X * scale + cameraOffset.X),
+                    (int)(bounds.Y * scale + cameraOffset.Y),
+                    (int)(bounds.Width * scale),
+                    (int)(bounds.Height * scale)
+                );
+                _spriteBatch.Draw(texture, drawRect, Color.White);
+
+                if (GameSettings.Debug.IsDebugModeEnabled)
+                {
+                    Texture2D pixel = _roomTexture;
+                    _spriteBatch.Draw(pixel, drawRect, Color.Lime * 0.2f);
+                    int border = 2;
+                    _spriteBatch.Draw(pixel, new Rectangle(drawRect.X, drawRect.Y, drawRect.Width, border), Color.Lime); // top
+                    _spriteBatch.Draw(pixel, new Rectangle(drawRect.X, drawRect.Y + drawRect.Height - border, drawRect.Width, border), Color.Lime); // bottom
+                    _spriteBatch.Draw(pixel, new Rectangle(drawRect.X, drawRect.Y, border, drawRect.Height), Color.Lime); // left
+                    _spriteBatch.Draw(pixel, new Rectangle(drawRect.X + drawRect.Width - border, drawRect.Y, border, drawRect.Height), Color.Lime); // right
+                }
             }
         }
     }

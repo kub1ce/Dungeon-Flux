@@ -22,6 +22,8 @@ public class DungeonFluxGame : Game
     private PlayerView _playerView;
     private Texture2D _playerTexture;
     private Texture2D _enemyTexture;
+    private Texture2D _coinTexture;
+    private Texture2D _aidTexture;
 
     private KeyboardState _previousKeyboardState;
     private MouseState _previousMouseState;
@@ -90,7 +92,9 @@ public class DungeonFluxGame : Game
         _playerController = new PlayerController(_playerModel, _model, GraphicsDevice, this);
         _playerTexture = Content.Load<Texture2D>("David");
         _enemyTexture = Content.Load<Texture2D>("Timarokk");
-        _view = new GameView(_model, _spriteBatch, _menuFont, _playerModel, _enemyTexture);
+        _coinTexture = Content.Load<Texture2D>("coin");
+        _aidTexture = Content.Load<Texture2D>("aid");
+        _view = new GameView(_model, _spriteBatch, _menuFont, _playerModel, _enemyTexture, _coinTexture, _aidTexture);
         _playerView = new PlayerView(_playerModel, _playerTexture, _view, Content);
         Logger.Log("Game initialized successfully");
     }

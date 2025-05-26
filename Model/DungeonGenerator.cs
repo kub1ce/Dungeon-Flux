@@ -119,7 +119,16 @@ namespace DungeonFlux.Model
                     var room = _dungeon[x, y];
                     if (room != null && room.Type != RoomType.Start && room.Type != RoomType.Exit)
                     {
-                        room.Type = room.IsDeadEnd() ? RoomType.DeadEnd : RoomType.Corridor;
+                        if (room.IsDeadEnd())
+                        {
+                            room.Type = RoomType.DeadEnd;
+                            room.SubType = GetRandomRoomSubType();
+                        }
+                        else
+                        {
+                            room.Type = RoomType.Corridor;
+                            room.SubType = RoomSubType.Empty;
+                        }
                     }
                 }
             }
@@ -209,16 +218,21 @@ namespace DungeonFlux.Model
             return furthestRoom;
         }
 
-        private RoomType GetRandomRoomType()
+        private RoomSubType GetRandomRoomSubType()
         {
             double roll = _random.NextDouble();
             double cumulative = 0;
 
-            if (roll < (cumulative += GameSettings.Dungeon.RoomProbabilities.Empty)) return RoomType.Empty;
-            if (roll < (cumulative += GameSettings.Dungeon.RoomProbabilities.Enemy)) return RoomType.Enemy;
-            if (roll < (cumulative += GameSettings.Dungeon.RoomProbabilities.Treasure)) return RoomType.Treasure;
-            if (roll < (cumulative += GameSettings.Dungeon.RoomProbabilities.Shop)) return RoomType.Shop;
-            return RoomType.Boss;
+            if (roll < (cumulative += GameSettings.Dungeon.RoomProbabilities.Enemy)) return RoomSubType.Enemy;
+            if (roll < (cumulative += GameSettings.Dungeon.RoomProbabilities.Treasure)) return RoomSubType.Treasure;
+            if (roll < (cumulative += GameSettings.Dungeon.RoomProbabilities.Shop)) return RoomSubType.Shop;
+            if (roll < (cumulative += GameSettings.Dungeon.RoomProbabilities.Boss)) return RoomSubType.Boss;
+            return RoomSubType.Empty;
+        }
+
+        private RoomType GetRandomRoomType()
+        {
+            return RoomType.Corridor; // Default type for new rooms
         }
     }
 } 

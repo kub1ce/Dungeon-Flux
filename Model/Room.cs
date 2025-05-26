@@ -9,12 +9,14 @@ namespace DungeonFlux.Model
         public Point Position { get; set; }
         public Point Size { get; set; }
         public RoomType Type { get; set; }
+        public RoomSubType SubType { get; set; }
         public bool IsVisited { get; set; }
         public bool[] Connections { get; private set; }
         public Rectangle Bounds => new Rectangle(Position, Size);
         public List<Enemy> Enemies { get; set; } = new List<Enemy>();
+        public List<Item> Items { get; set; } = new List<Item>();
 
-        public Room(Point position, Point size, RoomType type)
+        public Room(Point position, Point size, RoomType type, RoomSubType subType = RoomSubType.Empty)
         {
             if (position.X < 0 || position.Y < 0)
                 throw new ArgumentException("Position coordinates must be non-negative");
@@ -24,6 +26,7 @@ namespace DungeonFlux.Model
             Position = position;
             Size = size;
             Type = type;
+            SubType = subType;
             IsVisited = false;
             Connections = new bool[GameSettings.Room.ConnectionCount];
         }

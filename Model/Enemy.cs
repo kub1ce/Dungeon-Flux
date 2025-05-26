@@ -92,6 +92,14 @@ namespace DungeonFlux.Model
             if (Room != null)
             {
                 float enemySize = GameSettings.Player.Size / (float)GameSettings.Graphics.RoomSize;
+                if (Room.SubType == RoomSubType.Boss)
+                {
+                    enemySize *= 1.5f;
+                }
+                else if (Room.Type == RoomType.Exit)
+                {
+                    enemySize *= 3f;
+                }
                 float roomX = Room.Position.X - 0.5f; // Add half-room offset
                 float roomY = Room.Position.Y - 0.5f; // Add half-room offset
                 float roomWidth = 1.0f; // Room size in world coordinates
@@ -214,6 +222,16 @@ namespace DungeonFlux.Model
         private bool WouldCollideWithEnemy(Vector2 newPosition, Enemy otherEnemy)
         {
             float enemySize = GameSettings.Player.Size / (float)GameSettings.Graphics.RoomSize;
+            
+            if (otherEnemy.Room != null && otherEnemy.Room.SubType == RoomSubType.Boss)
+            {
+                enemySize *= 1.5f;
+            }
+            else if (otherEnemy.Room != null && otherEnemy.Room.Type == RoomType.Exit)
+            {
+                enemySize *= 3f;
+            }
+            
             float minDistance = enemySize * 0.6f;
 
             return Vector2.Distance(newPosition, otherEnemy.Position) < minDistance;

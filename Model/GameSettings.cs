@@ -91,7 +91,7 @@ namespace DungeonFlux.Model
                 public static readonly Color Default = Color.Gray;
 
                 public static readonly Color StartRoom = Color.Green;
-                public static readonly Color ExitRoom = Color.Red;
+                public static readonly Color ExitRoom = Color.Lerp(Default, Color.Black, 0.2f);
                 public static readonly Color BossRoom = Color.Purple;
                 public static readonly Color Corridor = Color.Gray;
                 public static readonly Color DeadEnd = Default; // Color.Orange;
@@ -129,10 +129,10 @@ namespace DungeonFlux.Model
             /// </summary>
             public static class RoomProbabilities
             {
-                public const double Empty = 0.4;    // 40%
-                public const double Enemy = 0.2;    // 20%
+                public const double Empty = 0.05;    // 5%
+                public const double Enemy = 0.6;    // 60%
                 public const double Treasure = 0.15; // 15%
-                public const double Shop = 0.1;     // 10%
+                public const double Shop = 0.05;     // 5%
                 public const double Boss = 0.15;    // 15%
             }
         }

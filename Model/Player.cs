@@ -113,7 +113,22 @@ namespace DungeonFlux.Model
             {
                 if (damage)
                 {
-                    AddCoins(1);
+                    int playerRoomX = (int)Math.Round(Position.X);
+                    int playerRoomY = (int)Math.Round(Position.Y);
+                    var currentRoom = _gameModel.Dungeon[playerRoomX, playerRoomY];
+                    
+                    if (currentRoom != null && currentRoom.SubType == RoomSubType.Boss)
+                    {
+                        AddCoins(2);
+                    }
+                    else if (currentRoom != null && currentRoom.Type == RoomType.Exit)
+                    {
+                        AddCoins(10);
+                    }
+                    else
+                    {
+                        AddCoins(1);
+                    }
                 }
             }
             return true;

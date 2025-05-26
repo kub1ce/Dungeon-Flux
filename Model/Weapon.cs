@@ -130,6 +130,16 @@ namespace DungeonFlux.Model
         {
             Vector2 enemyPos = enemy.Position;
             Vector2 enemySize = new Vector2(GameSettings.Player.Size) / GameSettings.Graphics.RoomSize;
+            
+            if (enemy.Room != null && enemy.Room.SubType == RoomSubType.Boss)
+            {
+                enemySize *= 1.5f;
+            }
+            else if (enemy.Room != null && enemy.Room.Type == RoomType.Exit)
+            {
+                enemySize *= 3f;
+            }
+            
             return LineIntersectsRect(lineStart, lineEnd, enemyPos, enemyPos + enemySize);
         }
 

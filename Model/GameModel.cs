@@ -101,6 +101,20 @@ namespace DungeonFlux.Model
                             }
                         }
                     }
+                    else if (room != null && room.Type == RoomType.DeadEnd && room.SubType == RoomSubType.Boss)
+                    {
+                        Vector2 roomCenter = new Vector2(x, y);
+                        var boss = new Enemy(roomCenter, GameSettings.Enemy.Movement.DefaultHealth * 2);
+                        boss.Room = room;
+                        room.Enemies.Add(boss);
+                    }
+                    else if (room != null && room.Type == RoomType.Exit)
+                    {
+                        Vector2 roomCenter = new Vector2(x, y);
+                        var boss = new Enemy(roomCenter, GameSettings.Enemy.Movement.DefaultHealth * 5);
+                        boss.Room = room;
+                        room.Enemies.Add(boss);
+                    }
                     else if (room != null && room.Type == RoomType.DeadEnd && room.SubType == RoomSubType.Treasure)
                     {
                         // Spawn items in treasure rooms

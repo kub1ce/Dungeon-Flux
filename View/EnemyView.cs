@@ -35,6 +35,17 @@ namespace DungeonFlux.View
                                              _model.Position.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2);
             Vector2 position = (enemyWorld - cameraPosition * GameSettings.Graphics.RoomSize - new Vector2(GameSettings.Graphics.RoomSize / 2)) * scale + screenCenter;
             int enemySize = (int)(GameSettings.Player.Size * scale);
+            
+            if (_model.Room != null && _model.Room.SubType == RoomSubType.Boss)
+            {
+                enemySize = (int)(enemySize * 1.5f);
+            }
+
+            if (_model.Room != null && _model.Room.Type == RoomType.Exit)
+            {
+                enemySize = (int)(enemySize * 3f);
+            }
+            
             spriteBatch.Draw(_texture,
                 new Rectangle((int)position.X, (int)position.Y, enemySize, enemySize),
                 Color.White);

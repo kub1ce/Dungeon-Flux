@@ -12,7 +12,7 @@ namespace DungeonFlux.Model
         Corridor,
 
         [EnumMember]
-        [Description("Тупик")]
+        [Description("Комната")]
         DeadEnd,
 
         [EnumMember]

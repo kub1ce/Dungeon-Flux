@@ -1,0 +1,58 @@
+# Сборочные папки
+bin/
+obj/
+
+# MonoGame content builder output
+Content/obj/
+Content/bin/
+
+# Rider / ReSharper / IDE файлы
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+
+# Конфигурации Windows
+*.db
+*.pdb
+*.opendb
+
+# Логи
+*.log
+
+# Настройки Rider
+*.sln.iml
+
+# Файлы публикации
+*.publishsettings
+
+# Компилированные файлы
+*.exe
+*.dll
+
+# Конфиденциальные данные (если вдруг)
+*.key
+*.crt
+
+# Автоматически сгенерированные файлы
+*.cache
+*.config
+*.sourcelink.json
+
+# Системные папки
+.vs/
+*.vscode/
+
+# Архивы
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.bz2
+
+# Придумать название
+Content/Fonts/Overpass/static/
+Content/Fonts/Overpass/Overpass-Italic-VariableFont_wght.ttf

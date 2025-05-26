@@ -19,8 +19,7 @@ namespace DungeonFlux.Model
                 if (_position != value)
                 {
                     _position = value;
-                    PositionChanged?.Invoke(_position);
-                    _weapon?.SetPosition(_position);
+                    OnPositionChanged();
                 }
             }
         }
@@ -33,7 +32,7 @@ namespace DungeonFlux.Model
                 if (_health != value)
                 {
                     _health = value;
-                    HealthChanged?.Invoke(_health);
+                    OnHealthChanged();
                 }
             }
         }
@@ -46,7 +45,7 @@ namespace DungeonFlux.Model
                 if (_coins != value)
                 {
                     _coins = value;
-                    CoinsChanged?.Invoke(_coins);
+                    OnCoinsChanged();
                 }
             }
         }
@@ -83,6 +82,22 @@ namespace DungeonFlux.Model
             _weapon.SetPosition(Position);
         }
 
+        private void OnPositionChanged()
+        {
+            PositionChanged?.Invoke(_position);
+            _weapon?.SetPosition(_position);
+        }
+
+        private void OnHealthChanged()
+        {
+            HealthChanged?.Invoke(_health);
+        }
+
+        private void OnCoinsChanged()
+        {
+            CoinsChanged?.Invoke(_coins);
+        }
+
         public void Move(Vector2 direction, GameTime gameTime)
         {
             if (direction == Vector2.Zero)
@@ -113,25 +128,32 @@ namespace DungeonFlux.Model
             {
                 if (damage)
                 {
-                    int playerRoomX = (int)Math.Round(Position.X);
-                    int playerRoomY = (int)Math.Round(Position.Y);
-                    var currentRoom = _gameModel.Dungeon[playerRoomX, playerRoomY];
-                    
-                    if (currentRoom != null && currentRoom.SubType == RoomSubType.Boss)
-                    {
-                        AddCoins(2);
-                    }
-                    else if (currentRoom != null && currentRoom.Type == RoomType.Exit)
-                    {
-                        AddCoins(10);
-                    }
-                    else
-                    {
-                        AddCoins(1);
-                    }
+                    AddRewardForKill();
                 }
             }
             return true;
+        }
+
+        private void AddRewardForKill()
+        {
+            int playerRoomX = (int)Math.Round(Position.X);
+            int playerRoomY = (int)Math.Round(Position.Y);
+            var currentRoom = _gameModel.Dungeon[playerRoomX, playerRoomY];
+            
+            if (currentRoom == null) return;
+
+            if (currentRoom.SubType == RoomSubType.Boss)
+            {
+                AddCoins(2);
+            }
+            else if (currentRoom.Type == RoomType.Exit)
+            {
+                AddCoins(10);
+            }
+            else
+            {
+                AddCoins(1);
+            }
         }
 
         public void TakeDamage(int amount)

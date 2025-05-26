@@ -1,19 +1,13 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 
 namespace DungeonFlux.Model
 {
     public class MenuState
     {
-        private const string AuthorName = "Created by Kubice";
-        private const int ButtonWidth = 200;
-        private const int ButtonHeight = 50;
-        private const int ButtonSpacing = 200;
-        private const int StartButtonY = 400;
-        private const int AuthorMargin = 100;
-
         private readonly List<Button> _buttons;
         private readonly SpriteFont _font;
         private readonly string _authorText;
@@ -21,23 +15,42 @@ namespace DungeonFlux.Model
 
         public MenuState(SpriteFont font)
         {
-            _font = font;
-            _buttons = new List<Button>();
-            
-            // Создаем кнопки меню
-            var buttonSize = new Vector2(ButtonWidth, ButtonHeight);
-            var startButtonPosition = new Vector2(GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width / 2 - ButtonWidth / 2, StartButtonY);
-            
-            _buttons.Add(new Button("Start Game", startButtonPosition, buttonSize));
-            _buttons.Add(new Button("Settings", startButtonPosition + new Vector2(0, ButtonSpacing), buttonSize));
-            _buttons.Add(new Button("Exit", startButtonPosition + new Vector2(0, ButtonSpacing * 2), buttonSize));
+            try
+            {
+                Logger.Log("Initializing MenuState...");
+                _font = font;
+                _buttons = new List<Button>();
+                
+                // Создаем кнопки меню
+                var buttonSize = new Vector2(GameSettings.Menu.ButtonWidth, GameSettings.Menu.ButtonHeight);
+                var displayMode = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+                Logger.Log($"Current display mode: {displayMode.Width}x{displayMode.Height}");
+                
+                var startButtonPosition = new Vector2(displayMode.Width / 2 - GameSettings.Menu.ButtonWidth / 2, GameSettings.Menu.StartButtonY);
+                Logger.Log($"Start button position: {startButtonPosition}");
+                
+                _buttons.Add(new Button("Start Game", startButtonPosition, buttonSize));
+                Logger.Log("Added Start Game button");
+                
+                // _buttons.Add(new Button("Settings", startButtonPosition + new Vector2(0, GameSettings.Menu.ButtonSpacing), buttonSize)); // TODO реализовать настройки (не удалять)
+                _buttons.Add(new Button("Exit", startButtonPosition + new Vector2(0, GameSettings.Menu.ButtonSpacing), buttonSize));
+                Logger.Log("Added Exit button");
 
-            // Устанавливаем позицию текста автора
-            _authorText = AuthorName;
-            var screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-            var screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
-            var textSize = _font.MeasureString(_authorText);
-            _authorPosition = new Vector2(screenWidth - textSize.X - AuthorMargin, screenHeight - textSize.Y - AuthorMargin);
+                // Устанавливаем позицию текста автора
+                _authorText = GameSettings.Menu.AuthorName;
+                var screenWidth = displayMode.Width;
+                var screenHeight = displayMode.Height;
+                var textSize = _font.MeasureString(_authorText);
+                _authorPosition = new Vector2(screenWidth - textSize.X - GameSettings.Menu.AuthorMargin, screenHeight - textSize.Y - GameSettings.Menu.AuthorMargin);
+                Logger.Log($"Author text position: {_authorPosition}");
+                
+                Logger.Log("MenuState initialization completed successfully");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error during MenuState initialization", ex);
+                throw;
+            }
         }
 
         public void Update(MouseState currentMouseState, MouseState previousMouseState, GameTime gameTime)
@@ -65,12 +78,12 @@ namespace DungeonFlux.Model
 
         public bool IsSettingsClicked()
         {
-            return _buttons[1].IsClicked;
+            return false; // Settings button is disabled
         }
 
         public bool IsExitClicked()
         {
-            return _buttons[2].IsClicked;
+            return _buttons[1].IsClicked; // Changed from [2] to [1] since we only have 2 buttons now
         }
     }
 } 

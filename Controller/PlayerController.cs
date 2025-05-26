@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using DungeonFlux.Model;
+using DungeonFlux.View;
 using System;
 using System.Linq;
 
@@ -134,21 +135,11 @@ namespace DungeonFlux.Controller
 
                 if (currentRoom != null && currentRoom.Type == RoomType.Exit && !currentRoom.Enemies.Any(e => e.IsAlive))
                 {
-                    int currentHealth = _player.Health;
-                    int currentCoins = _player.Coins;
-
                     _gameModel.GenerateNewDungeon();
+                    _gameModel.SetGameOver(false);
+                    ((GameView)_game.Services.GetService(typeof(GameView)))?.ResetGameOverState();
 
                     _player.SetPosition(_gameModel.PlayerPosition);
-
-                    if (currentHealth < GameSettings.Player.MaxHealth)
-                    {
-                        _player.TakeDamage(GameSettings.Player.MaxHealth - currentHealth);
-                    }
-                    if (currentCoins > 0)
-                    {
-                        _player.AddCoins(currentCoins);
-                    }
                 }
             }
         }

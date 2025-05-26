@@ -62,81 +62,107 @@ namespace DungeonFlux.Model
             GenerateWalls();
             IsGameOver = false;
 
-            // Add enemies to enemy rooms
+            // Add enemies and items to rooms
             for (int x = 0; x < Dungeon.GetLength(0); x++)
             {
                 for (int y = 0; y < Dungeon.GetLength(1); y++)
                 {
                     var room = Dungeon[x, y];
-                    if (room != null && room.Type == RoomType.DeadEnd && room.SubType == RoomSubType.Enemy)
+                    if (room == null) continue;
+
+                    if (room.Type == RoomType.DeadEnd)
                     {
-                        int enemyCount = _random.Next(GameSettings.Enemy.Spawn.MinEnemiesPerRoom, GameSettings.Enemy.Spawn.MaxEnemiesPerRoom + 1);
-                        
-                        for (int i = 0; i < enemyCount; i++)
+                        switch (room.SubType)
                         {
-                            Vector2 roomCenter = new Vector2(x, y);
-                            float randomOffsetX = (float)(_random.NextDouble() * 2 - 1);
-                            float randomOffsetY = (float)(_random.NextDouble() * 2 - 1);
-                            
-                            float randomX = roomCenter.X + Math.Clamp(randomOffsetX, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
-                            float randomY = roomCenter.Y + Math.Clamp(randomOffsetY, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
-                            
-                            bool positionOccupied = false;
-                            foreach (var existingEnemy in room.Enemies)
-                            {
-                                float enemySize = GameSettings.Player.Size / (float)GameSettings.Graphics.RoomSize;
-                                float minDistance = enemySize * 0.6f;
-                                if (Vector2.Distance(new Vector2(randomX, randomY), existingEnemy.Position) < minDistance)
-                                {
-                                    positionOccupied = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (!positionOccupied)
-                            {
-                                var enemy = new Enemy(new Vector2(randomX, randomY));
-                                enemy.Room = room;
-                                room.Enemies.Add(enemy);
-                            }
+                            case RoomSubType.Enemy:
+                                SpawnEnemiesInRoom(room, x, y);
+                                break;
+                            case RoomSubType.Boss:
+                                SpawnBossInRoom(room, x, y);
+                                break;
+                            case RoomSubType.Treasure:
+                                SpawnItemsInTreasureRoom(room, x, y);
+                                break;
                         }
                     }
-                    else if (room != null && room.Type == RoomType.DeadEnd && room.SubType == RoomSubType.Boss)
+                    else if (room.Type == RoomType.Exit)
                     {
-                        Vector2 roomCenter = new Vector2(x, y);
-                        var boss = new Enemy(roomCenter, GameSettings.Enemy.Movement.DefaultHealth * 2);
-                        boss.Room = room;
-                        room.Enemies.Add(boss);
-                    }
-                    else if (room != null && room.Type == RoomType.Exit)
-                    {
-                        Vector2 roomCenter = new Vector2(x, y);
-                        var boss = new Enemy(roomCenter, GameSettings.Enemy.Movement.DefaultHealth * 5);
-                        boss.Room = room;
-                        room.Enemies.Add(boss);
-                    }
-                    else if (room != null && room.Type == RoomType.DeadEnd && room.SubType == RoomSubType.Treasure)
-                    {
-                        // Spawn items in treasure rooms
-                        int itemCount = _random.Next(3, 6);
-                        for (int i = 0; i < itemCount; i++)
-                        {
-                            Vector2 roomCenter = new Vector2(x, y);
-                            float randomOffsetX = (float)(_random.NextDouble() * 2 - 1) * 0.3f;
-                            float randomOffsetY = (float)(_random.NextDouble() * 2 - 1) * 0.3f;
-                            
-                            float randomX = roomCenter.X + randomOffsetX;
-                            float randomY = roomCenter.Y + randomOffsetY;
-                            
-                            Item item = _random.NextDouble() < 0.9f ? 
-                                new Coin(new Vector2(randomX, randomY)) : 
-                                new HealthPotion(new Vector2(randomX, randomY));
-                            
-                            item.Room = room;
-                            room.Items.Add(item);
-                        }
+                        SpawnExitBoss(room, x, y);
                     }
                 }
+            }
+        }
+
+        private void SpawnEnemiesInRoom(Room room, int x, int y)
+        {
+            int enemyCount = _random.Next(GameSettings.Enemy.Spawn.MinEnemiesPerRoom, GameSettings.Enemy.Spawn.MaxEnemiesPerRoom + 1);
+            
+            for (int i = 0; i < enemyCount; i++)
+            {
+                Vector2 roomCenter = new Vector2(x, y);
+                float randomOffsetX = (float)(_random.NextDouble() * 2 - 1);
+                float randomOffsetY = (float)(_random.NextDouble() * 2 - 1);
+                
+                float randomX = roomCenter.X + Math.Clamp(randomOffsetX, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
+                float randomY = roomCenter.Y + Math.Clamp(randomOffsetY, -GameSettings.Enemy.Spawn.SpawnRadiusRatio, GameSettings.Enemy.Spawn.SpawnRadiusRatio);
+                
+                if (!IsPositionOccupiedByEnemy(room, randomX, randomY))
+                {
+                    var enemy = new Enemy(new Vector2(randomX, randomY));
+                    enemy.Room = room;
+                    room.Enemies.Add(enemy);
+                }
+            }
+        }
+
+        private bool IsPositionOccupiedByEnemy(Room room, float x, float y)
+        {
+            foreach (var existingEnemy in room.Enemies)
+            {
+                float enemySize = GameSettings.Player.Size / (float)GameSettings.Graphics.RoomSize;
+                float minDistance = enemySize * 0.6f;
+                if (Vector2.Distance(new Vector2(x, y), existingEnemy.Position) < minDistance)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void SpawnBossInRoom(Room room, int x, int y)
+        {
+            Vector2 roomCenter = new Vector2(x, y);
+            var boss = new Enemy(roomCenter, GameSettings.Enemy.Movement.DefaultHealth * 2);
+            boss.Room = room;
+            room.Enemies.Add(boss);
+        }
+
+        private void SpawnExitBoss(Room room, int x, int y)
+        {
+            Vector2 roomCenter = new Vector2(x, y);
+            var boss = new Enemy(roomCenter, GameSettings.Enemy.Movement.DefaultHealth * 5);
+            boss.Room = room;
+            room.Enemies.Add(boss);
+        }
+
+        private void SpawnItemsInTreasureRoom(Room room, int x, int y)
+        {
+            int itemCount = _random.Next(3, 6);
+            for (int i = 0; i < itemCount; i++)
+            {
+                Vector2 roomCenter = new Vector2(x, y);
+                float randomOffsetX = (float)(_random.NextDouble() * 2 - 1) * 0.3f;
+                float randomOffsetY = (float)(_random.NextDouble() * 2 - 1) * 0.3f;
+                
+                float randomX = roomCenter.X + randomOffsetX;
+                float randomY = roomCenter.Y + randomOffsetY;
+                
+                Item item = _random.NextDouble() < 0.9f ? 
+                    new Coin(new Vector2(randomX, randomY)) : 
+                    new HealthPotion(new Vector2(randomX, randomY));
+                
+                item.Room = room;
+                room.Items.Add(item);
             }
         }
 
@@ -698,8 +724,7 @@ namespace DungeonFlux.Model
         {
             if (Dungeon[roomPosition.X, roomPosition.Y].Type == RoomType.Exit)
             {
-                IsGameOver = true;
-                Logger.Log("Player reached the exit! Game over.");
+                Logger.Log("Player reached the exit room.");
             }
         }
 
@@ -733,18 +758,11 @@ namespace DungeonFlux.Model
 
         private void UpdateEnemies(GameTime gameTime)
         {
-            int playerCurrentRoomX = (int)Math.Round(_player.Position.X + (GameSettings.Player.Size / 2) / GameSettings.Graphics.RoomSize);
-            int playerCurrentRoomY = (int)Math.Round(_player.Position.Y + (GameSettings.Player.Size / 2) / GameSettings.Graphics.RoomSize);
+            var currentRoom = GetCurrentRoom();
+            if (currentRoom == null) return;
 
-            Room playerCurrentRoom = Dungeon[playerCurrentRoomX, playerCurrentRoomY];
-
-            // Update door states based on enemies
-            UpdateDoorStates(playerCurrentRoom);
-
-            foreach (var enemy in playerCurrentRoom.Enemies)
-            {
-                enemy.MoveTowards(_player, gameTime);
-            }
+            UpdateDoorStates(currentRoom);
+            UpdateEnemiesInRoom(currentRoom, gameTime);
         }
 
         private void UpdateDoorStates(Room currentRoom)
@@ -755,42 +773,47 @@ namespace DungeonFlux.Model
             bool isPlayerFullyInside = IsPlayerFullyInsideRoom(currentRoom);
             bool hasChangedRoom = _previousPlayerRoom != currentRoom;
 
-            // Если в текущей комнате есть живые враги и игрок полностью внутри, закрываем все двери
+            UpdateDoorsBasedOnState(hasAliveEnemies, isPlayerFullyInside, hasChangedRoom, currentRoom);
+            _previousPlayerRoom = currentRoom;
+        }
+
+        private void UpdateDoorsBasedOnState(bool hasAliveEnemies, bool isPlayerFullyInside, bool hasChangedRoom, Room currentRoom)
+        {
             if (hasAliveEnemies && isPlayerFullyInside)
             {
-                foreach (var wall in Walls)
-                {
-                    if (wall.IsDoor)
-                    {
-                        wall.IsOpen = false;
-                    }
-                }
+                CloseAllDoors();
             }
             else if (hasAliveEnemies && !isPlayerFullyInside && hasChangedRoom)
             {
-                // Если есть враги, игрок не полностью внутри и сменил комнату, выталкиваем его в комнату
                 PushPlayerIntoRoom(currentRoom);
-                foreach (var wall in Walls)
-                {
-                    if (wall.IsDoor)
-                    {
-                        wall.IsOpen = false;
-                    }
-                }
+                CloseAllDoors();
             }
             else
             {
-                // Если врагов нет, открываем все двери в подземелье
-                foreach (var wall in Walls)
+                OpenAllDoors();
+            }
+        }
+
+        private void CloseAllDoors()
+        {
+            foreach (var wall in Walls)
+            {
+                if (wall.IsDoor)
                 {
-                    if (wall.IsDoor)
-                    {
-                        wall.IsOpen = true;
-                    }
+                    wall.IsOpen = false;
                 }
             }
+        }
 
-            _previousPlayerRoom = currentRoom;
+        private void OpenAllDoors()
+        {
+            foreach (var wall in Walls)
+            {
+                if (wall.IsDoor)
+                {
+                    wall.IsOpen = true;
+                }
+            }
         }
 
         private void PushPlayerIntoRoom(Room room)
@@ -873,31 +896,57 @@ namespace DungeonFlux.Model
         {
             if (_player == null) return;
 
-            int playerRoomX = (int)Math.Round(_player.Position.X);
-            int playerRoomY = (int)Math.Round(_player.Position.Y);
-            
-            var currentRoom = Dungeon[playerRoomX, playerRoomY];
+            var currentRoom = GetCurrentRoom();
             if (currentRoom == null) return;
 
+            var playerBounds = GetPlayerBounds();
+            CollectItemsInRoom(currentRoom, playerBounds);
+        }
+
+        private Room GetCurrentRoom()
+        {
+            int playerRoomX = (int)Math.Round(_player.Position.X);
+            int playerRoomY = (int)Math.Round(_player.Position.Y);
+            return Dungeon[playerRoomX, playerRoomY];
+        }
+
+        private Rectangle GetPlayerBounds()
+        {
             float playerX = _player.Position.X * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2f;
             float playerY = _player.Position.Y * GameSettings.Graphics.RoomSize + GameSettings.Graphics.RoomSize / 2f;
             int playerSize = GameSettings.Player.Size;
-            Rectangle playerBounds = new Rectangle(
+            return new Rectangle(
                 (int)(playerX),
                 (int)(playerY),
                 playerSize,
                 playerSize
             );
+        }
 
-            for (int i = currentRoom.Items.Count - 1; i >= 0; i--)
+        private void CollectItemsInRoom(Room room, Rectangle playerBounds)
+        {
+            for (int i = room.Items.Count - 1; i >= 0; i--)
             {
-                var item = currentRoom.Items[i];
+                var item = room.Items[i];
                 if (!item.IsCollected && item.Bounds.Intersects(playerBounds))
                 {
                     item.Collect(_player);
-                    currentRoom.Items.RemoveAt(i);
+                    room.Items.RemoveAt(i);
                 }
             }
+        }
+
+        private void UpdateEnemiesInRoom(Room room, GameTime gameTime)
+        {
+            foreach (var enemy in room.Enemies)
+            {
+                enemy.MoveTowards(_player, gameTime);
+            }
+        }
+
+        public void SetGameOver(bool value)
+        {
+            IsGameOver = value;
         }
     }
 }

@@ -139,6 +139,11 @@ namespace DungeonFlux.View
             return (left, top, boxWidthWorld, boxHeightWorld);
         }
 
+        public void ResetGameOverState()
+        {
+            _isGameOver = false;
+        }
+
         public void Update()
         {
             if (!_isGameOver && !_player.IsAlive())

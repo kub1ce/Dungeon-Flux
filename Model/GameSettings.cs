@@ -22,7 +22,7 @@ namespace DungeonFlux.Model
             public static class Default
             {
                 public const float Cooldown = 0.5f;  // 0.5 секунды между атаками
-                public const int Damage = 10;        // 10 единиц урона
+                public const int Damage = 100;        // 10 единиц урона
                 public const float Range = 480f;     // дальности атаки
             }
 
@@ -44,6 +44,8 @@ namespace DungeonFlux.Model
                 public const float AttackRange = 0.08f;
                 public const float AttackCooldown = 0.6f;
                 public const int DefaultHealth = 30;
+                public const float StuckThreshold = 0.5f; // Время в секундах, которое враг будет пытаться выбраться из замкнутости
+                public const float StuckDistance = 0.01f; // Расстояние, на котором враг будет считаться застрявшим
             }
 
             public static class Spawn
@@ -199,6 +201,17 @@ namespace DungeonFlux.Model
                 public const int Thickness = 2;
                 public static readonly Color Color = Color.Red;
             }
+        }
+
+        // Menu settings
+        public static class Menu
+        {
+            public const string AuthorName = "Created by Kubice";
+            public const int ButtonWidth = 200;
+            public const int ButtonHeight = 50;
+            public const int ButtonSpacing = 200;
+            public const int StartButtonY = 400;
+            public const int AuthorMargin = 100;
         }
     }
 } 

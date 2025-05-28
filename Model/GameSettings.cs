@@ -22,7 +22,7 @@ namespace DungeonFlux.Model
             public static class Default
             {
                 public const float Cooldown = 0.5f;  // 0.5 секунды между атаками
-                public const int Damage = 100;        // 10 единиц урона
+                public const int Damage = 12;        // 10 единиц урона
                 public const float Range = 480f;     // дальности атаки
             }
 
@@ -50,7 +50,7 @@ namespace DungeonFlux.Model
 
             public static class Spawn
             {
-                public const int MinEnemiesPerRoom = 1;
+                public const int MinEnemiesPerRoom = 2;
                 public const int MaxEnemiesPerRoom = 7;
                 public const float SpawnRadiusRatio = 0.35f; // в %, относительно центра комната (не может быть больше 0.5)
             }
@@ -72,7 +72,7 @@ namespace DungeonFlux.Model
             public static readonly int RoomSize = 1536;
             public static readonly int WallThickness = 32;
             public static readonly int Padding = 0;
-            public static readonly float Scale = 1f;
+            public static readonly float Scale = 1.5f;
 
             public static class Corridor
             {
@@ -132,9 +132,9 @@ namespace DungeonFlux.Model
             public static class RoomProbabilities
             {
                 public const double Empty = 0.05;    // 5%
-                public const double Enemy = 0.6;    // 60%
+                public const double Enemy = 0.64;    // 64%
                 public const double Treasure = 0.15; // 15%
-                public const double Shop = 0.05;     // 5%
+                public const double Shop = 0.01;     // 1%
                 public const double Boss = 0.15;    // 15%
             }
         }
@@ -167,7 +167,7 @@ namespace DungeonFlux.Model
             public static class BoundingBox
             {
                 public const float WidthInPlayers = 3f;
-                public const float HeightInPlayers = 2f; // Мб сразу тут считать в размене игрока и возвращать уже значения??
+                public const float HeightInPlayers = 2f; // Мб сразу тут считать в размере игрока и возвращать уже значения??
             }
 
             public static class ScreenLimits

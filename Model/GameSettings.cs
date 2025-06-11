@@ -72,7 +72,7 @@ namespace DungeonFlux.Model
             public static readonly int RoomSize = 1536;
             public static readonly int WallThickness = 32;
             public static readonly int Padding = 0;
-            public static readonly float Scale = 1.5f;
+            public static readonly float Scale = 1f;
 
             public static class Corridor
             {

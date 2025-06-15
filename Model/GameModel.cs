@@ -46,6 +46,7 @@ namespace DungeonFlux.Model
         public void SetScale(float scale)
         {
             _scale = scale;
+            GameSettings.Graphics.Scale = scale;
         }
 
         public void SetPlayer(Player player)

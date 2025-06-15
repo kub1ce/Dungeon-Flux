@@ -29,7 +29,9 @@ public class DungeonFluxGame : Game
     private MouseState _previousMouseState;
     private SpriteFont _menuFont;
     private MenuState _menuState;
+    private SettingsState _settingsState;
     private bool _isInMenu = true;
+    private bool _isInSettings = false;
 
     public DungeonFluxGame()
     {
@@ -89,6 +91,10 @@ public class DungeonFluxGame : Game
             Logger.Log("Starting content loading...");
             InitializeSpriteBatch();
             InitializeMenu();
+            
+            GameSettings.Game.WhitePixel = new Texture2D(GraphicsDevice, 1, 1);
+            GameSettings.Game.WhitePixel.SetData(new[] { Color.White });
+            
             Logger.Log("Content loading completed successfully");
         }
         catch (Exception ex)
@@ -240,16 +246,32 @@ public class DungeonFluxGame : Game
 
     private void UpdateMenu(MouseState mouseState, GameTime gameTime)
     {
-        _menuState.Update(mouseState, _previousMouseState, gameTime);
-
-        if (_menuState.IsStartGameClicked())
+        if (_isInSettings)
         {
-            InitializeGame();
-            _isInMenu = false;
+            _settingsState.Update(mouseState, _previousMouseState, gameTime);
+            if (_settingsState.IsBackClicked())
+            {
+                _isInSettings = false;
+            }
         }
-        else if (_menuState.IsExitClicked())
+        else
         {
-            Exit();
+            _menuState.Update(mouseState, _previousMouseState, gameTime);
+
+            if (_menuState.IsStartGameClicked())
+            {
+                InitializeGame();
+                _isInMenu = false;
+            }
+            else if (_menuState.IsSettingsClicked())
+            {
+                _settingsState = new SettingsState(_menuFont);
+                _isInSettings = true;
+            }
+            else if (_menuState.IsExitClicked())
+            {
+                Exit();
+            }
         }
     }
 
@@ -302,7 +324,14 @@ public class DungeonFluxGame : Game
             
             if (_isInMenu)
             {
-                _menuState.Draw(_spriteBatch);
+                if (_isInSettings)
+                {
+                    _settingsState.Draw(_spriteBatch);
+                }
+                else
+                {
+                    _menuState.Draw(_spriteBatch);
+                }
             }
             else
             {

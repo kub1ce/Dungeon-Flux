@@ -32,9 +32,9 @@ namespace DungeonFlux.Model
                 _buttons.Add(new Button("Start Game", startButtonPosition, buttonSize));
                 Logger.Log("Added Start Game button");
                 
-                // _buttons.Add(new Button("Settings", startButtonPosition + new Vector2(0, GameSettings.Menu.ButtonSpacing), buttonSize)); // TODO реализовать настройки (не удалять)
-                _buttons.Add(new Button("Exit", startButtonPosition + new Vector2(0, GameSettings.Menu.ButtonSpacing), buttonSize));
-                Logger.Log("Added Exit button");
+                _buttons.Add(new Button("Settings", startButtonPosition + new Vector2(0, GameSettings.Menu.ButtonSpacing), buttonSize));
+                _buttons.Add(new Button("Exit", startButtonPosition + new Vector2(0, GameSettings.Menu.ButtonSpacing * 2), buttonSize));
+                Logger.Log("Added Settings and Exit buttons");
 
                 // Устанавливаем позицию текста автора
                 _authorText = GameSettings.Menu.AuthorName;
@@ -78,12 +78,12 @@ namespace DungeonFlux.Model
 
         public bool IsSettingsClicked()
         {
-            return false; // Settings button is disabled
+            return _buttons[1].IsClicked;
         }
 
         public bool IsExitClicked()
         {
-            return _buttons[1].IsClicked; // Changed from [2] to [1] since we only have 2 buttons now
+            return _buttons[2].IsClicked;
         }
     }
 } 

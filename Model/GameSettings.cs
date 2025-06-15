@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace DungeonFlux.Model
 {
@@ -72,7 +73,7 @@ namespace DungeonFlux.Model
             public static readonly int RoomSize = 1536;
             public static readonly int WallThickness = 32;
             public static readonly int Padding = 0;
-            public static readonly float Scale = 1f;
+            public static float Scale = 1f;
 
             public static class Corridor
             {
@@ -212,6 +213,11 @@ namespace DungeonFlux.Model
             public const int ButtonSpacing = 200;
             public const int StartButtonY = 400;
             public const int AuthorMargin = 100;
+        }
+
+        public static class Game
+        {
+            public static Texture2D WhitePixel { get; set; }
         }
     }
 } 
